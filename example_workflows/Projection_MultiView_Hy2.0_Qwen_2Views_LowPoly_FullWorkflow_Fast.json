@@ -1,8 +1,8 @@
 {
   "id": "af6f6a9b-8e52-42f2-bdda-7a6b42461689",
   "revision": 0,
-  "last_node_id": 1593,
-  "last_link_id": 1961,
+  "last_node_id": 1594,
+  "last_link_id": 1971,
   "nodes": [
     {
       "id": 358,
@@ -308,8 +308,8 @@
         "cnr_id": "comfy-core",
         "ver": "0.16.4",
         "Node name for S&R": "Preview3D",
-        "Last Time Model File": "C:/Git/ComfyUI/output/3D/BattleAxe_Fast_MV/BattleAxe_Fast_MV_Textured_MV_00001_.glb",
-        "Resource Folder": "Git/ComfyUI/output/3D/BattleAxe_Fast_MV",
+        "Last Time Model File": "C:/Git/ComfyUI/output/3D/RedCyborg_Fast/RedCyborg_Fast_Textured_MV_00001_.glb",
+        "Resource Folder": "Git/ComfyUI/output/3D/RedCyborg_Fast",
         "Scene Config": {
           "showGrid": true,
           "backgroundColor": "#282828",
@@ -321,14 +321,14 @@
           "fov": 35,
           "state": {
             "position": {
-              "x": 2.1750262612008453,
-              "y": 4.198978521781839,
-              "z": -9.181232993985013
+              "x": -1.294367705149825,
+              "y": 4.60026965226109,
+              "z": 9.586633265235454
             },
             "target": {
-              "x": 0.015128442341736461,
-              "y": 2.6938330737422267,
-              "z": -0.04891329762729182
+              "x": -3.850756635176976e-70,
+              "y": 2.5,
+              "z": -8.433730248340801e-71
             },
             "zoom": 1,
             "cameraType": "perspective"
@@ -339,12 +339,12 @@
         },
         "Model Config": {
           "upDirection": "original",
-          "materialMode": "original",
+          "materialMode": "normal",
           "showSkeleton": false
         }
       },
       "widgets_values": [
-        "C:/Git/ComfyUI/output/3D/BattleAxe_Fast_MV/BattleAxe_Fast_MV_Textured_MV_00001_.glb",
+        "C:/Git/ComfyUI/output/3D/RedCyborg_Fast/RedCyborg_Fast_Textured_MV_00001_.glb",
         ""
       ]
     },
@@ -782,7 +782,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 28,
+      "order": 30,
       "mode": 0,
       "inputs": [
         {
@@ -1061,7 +1061,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 27,
+      "order": 31,
       "mode": 0,
       "inputs": [
         {
@@ -1195,82 +1195,61 @@
       "bgcolor": "#3f5159"
     },
     {
-      "id": 420,
-      "type": "bf1edf2f-ccb7-45ac-882e-55bdd5f0be86",
+      "id": 1027,
+      "type": "SetNode",
       "pos": [
-        -1038.0725923791795,
-        -836.8062304517938
+        -706.3193391758276,
+        -1428.578186489359
       ],
       "size": [
-        181.554296875,
-        86
+        240.7466796875,
+        60
       ],
-      "flags": {},
-      "order": 24,
+      "flags": {
+        "collapsed": false
+      },
+      "order": 35,
       "mode": 0,
       "inputs": [
         {
-          "label": "prefix",
-          "name": "",
-          "type": "*",
-          "link": 661
-        },
-        {
-          "label": "white_mesh",
-          "name": "trimesh",
-          "type": "TRIMESH",
-          "link": 663
-        },
-        {
-          "label": "color_image",
-          "name": "_1",
-          "type": "*",
-          "link": 669
-        },
-        {
-          "label": "seed",
-          "name": "_2",
-          "type": "*",
-          "link": 1750
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "link": 1888
         }
       ],
       "outputs": [
         {
-          "label": "FrontView",
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": [
-            680
-          ]
-        },
-        {
-          "label": "BackView",
-          "name": "IMAGE_2",
-          "type": "IMAGE",
-          "links": [
-            682
-          ]
+          "links": null
         }
       ],
+      "title": "Set_SourceImage_Processed",
       "properties": {
-        "proxyWidgets": [],
-        "cnr_id": "comfy-core",
-        "ver": "0.16.4"
+        "Node name for S&R": "SetNode",
+        "aux_id": "SetNode",
+        "previousName": "SourceImage_Processed"
       },
-      "widgets_values": []
+      "widgets_values": [
+        "SourceImage_Processed"
+      ],
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
     },
     {
-      "id": 1564,
-      "type": "LoadImage",
+      "id": 428,
+      "type": "GetNode",
       "pos": [
-        -2046.4162128442308,
-        -515.4299234840769
+        -1303.110704288841,
+        -1152.1129866832034
       ],
       "size": [
-        635.9300595433349,
-        683.6657647091677
+        210,
+        60
       ],
-      "flags": {},
+      "flags": {
+        "collapsed": true
+      },
       "order": 16,
       "mode": 0,
       "inputs": [],
@@ -1279,35 +1258,31 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            1867
+            658
           ]
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": null
         }
       ],
+      "title": "Get_SourceImage_Processed",
       "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.18.1",
-        "Node name for S&R": "LoadImage"
+        "Node name for S&R": "GetNode",
+        "aux_id": "GetNode"
       },
       "widgets_values": [
-        "battle_axe_with_embedded_skull_3d_game.jpeg",
-        "image"
-      ]
+        "SourceImage_Processed"
+      ],
+      "color": "#2a363b",
+      "bgcolor": "#3f5159"
     },
     {
-      "id": 1525,
-      "type": "PrimitiveInt",
+      "id": 1532,
+      "type": "GetNode",
       "pos": [
-        -1757.1524380356748,
-        -791.4258209407993
+        -1279.9515740696759,
+        -540.492199855447
       ],
       "size": [
-        270,
-        82
+        210,
+        60
       ],
       "flags": {},
       "order": 17,
@@ -1315,57 +1290,100 @@
       "inputs": [],
       "outputs": [
         {
-          "name": "INT",
-          "type": "INT",
+          "name": "*",
+          "type": "*",
           "links": [
-            1821
+            1834
           ]
         }
       ],
-      "title": "Low Poly Face Number",
+      "title": "Get_LowPoly_Textured",
       "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.16.4",
-        "Node name for S&R": "PrimitiveInt"
+        "Node name for S&R": "GetNode",
+        "aux_id": "GetNode"
       },
       "widgets_values": [
-        5000,
-        "fixed"
+        "LowPoly_Textured"
       ]
     },
     {
-      "id": 209,
-      "type": "PrimitiveInt",
+      "id": 418,
+      "type": "SetNode",
       "pos": [
-        -2054.3844647772535,
-        -792.3221679412555
+        -742.0868958352869,
+        -1115.7840550091967
       ],
       "size": [
-        270,
-        82
+        210,
+        60
       ],
-      "flags": {},
-      "order": 18,
+      "flags": {
+        "collapsed": true
+      },
+      "order": 36,
       "mode": 0,
-      "inputs": [],
-      "outputs": [
+      "inputs": [
         {
-          "name": "INT",
-          "type": "INT",
-          "links": [
-            564
-          ]
+          "name": "*",
+          "type": "*",
+          "link": 1818
         }
       ],
-      "title": "High Poly Face Number",
+      "outputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "Set_HighPoly_WhiteMesh",
       "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.16.4",
-        "Node name for S&R": "PrimitiveInt"
+        "Node name for S&R": "SetNode",
+        "aux_id": "SetNode",
+        "previousName": "HighPoly_WhiteMesh"
       },
       "widgets_values": [
-        100000,
-        "fixed"
+        "HighPoly_WhiteMesh"
+      ]
+    },
+    {
+      "id": 1523,
+      "type": "SetNode",
+      "pos": [
+        -750.0771905917245,
+        -1069.1663859530133
+      ],
+      "size": [
+        210,
+        58
+      ],
+      "flags": {
+        "collapsed": true
+      },
+      "order": 37,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "link": 1819
+        }
+      ],
+      "outputs": [
+        {
+          "name": "*",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "Set_LowPoly_Textured",
+      "properties": {
+        "Node name for S&R": "SetNode",
+        "aux_id": "SetNode",
+        "previousName": "LowPoly_Textured"
+      },
+      "widgets_values": [
+        "LowPoly_Textured"
       ]
     },
     {
@@ -1380,7 +1398,7 @@
         626
       ],
       "flags": {},
-      "order": 31,
+      "order": 28,
       "mode": 0,
       "inputs": [
         {
@@ -1477,7 +1495,7 @@
         1.15,
         true,
         20,
-        true,
+        false,
         0.01,
         1,
         1,
@@ -1491,150 +1509,73 @@
       ]
     },
     {
-      "id": 1027,
-      "type": "SetNode",
+      "id": 209,
+      "type": "PrimitiveInt",
       "pos": [
-        -706.3193391758276,
-        -1428.578186489359
+        -2054.3844647772535,
+        -792.3221679412555
       ],
       "size": [
-        240.7466796875,
-        60
+        270,
+        82
       ],
-      "flags": {
-        "collapsed": false
-      },
-      "order": 35,
+      "flags": {},
+      "order": 18,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "link": 1888
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": null
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            564
+          ]
         }
       ],
-      "title": "Set_SourceImage_Processed",
+      "title": "High Poly Face Number",
       "properties": {
-        "Node name for S&R": "SetNode",
-        "aux_id": "SetNode",
-        "previousName": "SourceImage_Processed"
+        "cnr_id": "comfy-core",
+        "ver": "0.16.4",
+        "Node name for S&R": "PrimitiveInt"
       },
       "widgets_values": [
-        "SourceImage_Processed"
-      ],
-      "color": "#2a363b",
-      "bgcolor": "#3f5159"
+        300000,
+        "fixed"
+      ]
     },
     {
-      "id": 428,
-      "type": "GetNode",
+      "id": 1525,
+      "type": "PrimitiveInt",
       "pos": [
-        -1303.110704288841,
-        -1152.1129866832034
+        -1757.1524380356748,
+        -791.4258209407993
       ],
       "size": [
-        210,
-        60
+        270,
+        82
       ],
-      "flags": {
-        "collapsed": true
-      },
+      "flags": {},
       "order": 19,
       "mode": 0,
       "inputs": [],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
+          "name": "INT",
+          "type": "INT",
           "links": [
-            658
+            1821
           ]
         }
       ],
-      "title": "Get_SourceImage_Processed",
-      "properties": {
-        "Node name for S&R": "GetNode",
-        "aux_id": "GetNode"
-      },
-      "widgets_values": [
-        "SourceImage_Processed"
-      ],
-      "color": "#2a363b",
-      "bgcolor": "#3f5159"
-    },
-    {
-      "id": 1532,
-      "type": "GetNode",
-      "pos": [
-        -1279.9515740696759,
-        -540.492199855447
-      ],
-      "size": [
-        210,
-        60
-      ],
-      "flags": {},
-      "order": 20,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "*",
-          "type": "*",
-          "links": [
-            1834
-          ]
-        }
-      ],
-      "title": "Get_LowPoly_Textured",
-      "properties": {
-        "Node name for S&R": "GetNode",
-        "aux_id": "GetNode"
-      },
-      "widgets_values": [
-        "LowPoly_Textured"
-      ]
-    },
-    {
-      "id": 219,
-      "type": "PrimitiveString",
-      "pos": [
-        -2058.606314017538,
-        -1029.5385288033083
-      ],
-      "size": [
-        270,
-        58
-      ],
-      "flags": {},
-      "order": 21,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "STRING",
-          "type": "STRING",
-          "links": [
-            464,
-            465
-          ]
-        }
-      ],
-      "title": "Name -> output in 3D folder",
+      "title": "Low Poly Face Number",
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.16.4",
-        "Node name for S&R": "PrimitiveString"
+        "Node name for S&R": "PrimitiveInt"
       },
       "widgets_values": [
-        "BattleAxe_Fast_MV"
+        10000,
+        "fixed"
       ]
     },
     {
@@ -1684,83 +1625,142 @@
       "widgets_values": []
     },
     {
-      "id": 418,
-      "type": "SetNode",
+      "id": 420,
+      "type": "bf1edf2f-ccb7-45ac-882e-55bdd5f0be86",
       "pos": [
-        -742.0868958352869,
-        -1115.7840550091967
+        -1038.0725923791795,
+        -836.8062304517938
       ],
       "size": [
-        210,
-        60
+        181.554296875,
+        86
       ],
-      "flags": {
-        "collapsed": true
-      },
-      "order": 36,
+      "flags": {},
+      "order": 24,
       "mode": 0,
       "inputs": [
         {
-          "name": "*",
+          "label": "prefix",
+          "name": "",
           "type": "*",
-          "link": 1818
+          "link": 661
+        },
+        {
+          "label": "white_mesh",
+          "name": "trimesh",
+          "type": "TRIMESH",
+          "link": 663
+        },
+        {
+          "label": "color_image",
+          "name": "_1",
+          "type": "*",
+          "link": 669
+        },
+        {
+          "label": "seed",
+          "name": "_2",
+          "type": "*",
+          "link": 1750
         }
       ],
       "outputs": [
         {
-          "name": "*",
-          "type": "*",
+          "label": "FrontView",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            680
+          ]
+        },
+        {
+          "label": "BackView",
+          "name": "IMAGE_2",
+          "type": "IMAGE",
+          "links": [
+            682
+          ]
+        }
+      ],
+      "properties": {
+        "proxyWidgets": [],
+        "cnr_id": "comfy-core",
+        "ver": "0.16.4"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 1564,
+      "type": "LoadImage",
+      "pos": [
+        -2046.4162128442308,
+        -515.4299234840769
+      ],
+      "size": [
+        635.9300595433349,
+        683.6657647091677
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1867
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
           "links": null
         }
       ],
-      "title": "Set_HighPoly_WhiteMesh",
       "properties": {
-        "Node name for S&R": "SetNode",
-        "aux_id": "SetNode",
-        "previousName": "HighPoly_WhiteMesh"
+        "cnr_id": "comfy-core",
+        "ver": "0.18.1",
+        "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "HighPoly_WhiteMesh"
+        "Image_1024_00087_.png",
+        "image"
       ]
     },
     {
-      "id": 1523,
-      "type": "SetNode",
+      "id": 219,
+      "type": "PrimitiveString",
       "pos": [
-        -750.0771905917245,
-        -1069.1663859530133
+        -2058.606314017538,
+        -1029.5385288033083
       ],
       "size": [
-        210,
+        270,
         58
       ],
-      "flags": {
-        "collapsed": true
-      },
-      "order": 37,
+      "flags": {},
+      "order": 21,
       "mode": 0,
-      "inputs": [
-        {
-          "name": "*",
-          "type": "*",
-          "link": 1819
-        }
-      ],
+      "inputs": [],
       "outputs": [
         {
-          "name": "*",
-          "type": "*",
-          "links": null
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            464,
+            465
+          ]
         }
       ],
-      "title": "Set_LowPoly_Textured",
+      "title": "Name -> output in 3D folder",
       "properties": {
-        "Node name for S&R": "SetNode",
-        "aux_id": "SetNode",
-        "previousName": "LowPoly_Textured"
+        "cnr_id": "comfy-core",
+        "ver": "0.16.4",
+        "Node name for S&R": "PrimitiveString"
       },
       "widgets_values": [
-        "LowPoly_Textured"
+        "RedCyborg_Fast_Cascade"
       ]
     },
     {
@@ -1775,7 +1775,7 @@
         106
       ],
       "flags": {},
-      "order": 30,
+      "order": 27,
       "mode": 0,
       "inputs": [
         {
@@ -2175,8 +2175,8 @@
         "version": 1,
         "state": {
           "lastGroupId": 31,
-          "lastNodeId": 1593,
-          "lastLinkId": 1961,
+          "lastNodeId": 1594,
+          "lastLinkId": 1971,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -2309,7 +2309,7 @@
               58
             ],
             "flags": {},
-            "order": 6,
+            "order": 7,
             "mode": 0,
             "inputs": [
               {
@@ -2392,7 +2392,7 @@
               82
             ],
             "flags": {},
-            "order": 8,
+            "order": 9,
             "mode": 0,
             "inputs": [
               {
@@ -2443,7 +2443,7 @@
               274
             ],
             "flags": {},
-            "order": 10,
+            "order": 11,
             "mode": 0,
             "inputs": [
               {
@@ -2493,7 +2493,7 @@
               58
             ],
             "flags": {},
-            "order": 5,
+            "order": 6,
             "mode": 0,
             "inputs": [
               {
@@ -2534,7 +2534,7 @@
               26
             ],
             "flags": {},
-            "order": 11,
+            "order": 12,
             "mode": 0,
             "inputs": [
               {
@@ -2574,7 +2574,7 @@
               102
             ],
             "flags": {},
-            "order": 12,
+            "order": 13,
             "mode": 0,
             "inputs": [
               {
@@ -2633,7 +2633,7 @@
             "flags": {
               "collapsed": false
             },
-            "order": 13,
+            "order": 14,
             "mode": 0,
             "inputs": [
               {
@@ -2679,7 +2679,7 @@
               46
             ],
             "flags": {},
-            "order": 15,
+            "order": 16,
             "mode": 0,
             "inputs": [
               {
@@ -2731,7 +2731,7 @@
               26
             ],
             "flags": {},
-            "order": 20,
+            "order": 21,
             "mode": 0,
             "inputs": [
               {
@@ -2771,7 +2771,7 @@
               102
             ],
             "flags": {},
-            "order": 21,
+            "order": 22,
             "mode": 0,
             "inputs": [
               {
@@ -2828,7 +2828,7 @@
               60
             ],
             "flags": {},
-            "order": 16,
+            "order": 17,
             "mode": 0,
             "inputs": [
               {
@@ -2863,7 +2863,7 @@
               60
             ],
             "flags": {},
-            "order": 14,
+            "order": 15,
             "mode": 0,
             "inputs": [
               {
@@ -2899,7 +2899,7 @@
               60
             ],
             "flags": {},
-            "order": 25,
+            "order": 26,
             "mode": 0,
             "inputs": [
               {
@@ -2934,7 +2934,7 @@
               26
             ],
             "flags": {},
-            "order": 26,
+            "order": 27,
             "mode": 0,
             "inputs": [
               {
@@ -2969,7 +2969,7 @@
               142.11360851901668
             ],
             "flags": {},
-            "order": 7,
+            "order": 8,
             "mode": 0,
             "inputs": [
               {
@@ -3015,7 +3015,7 @@
               82
             ],
             "flags": {},
-            "order": 17,
+            "order": 18,
             "mode": 0,
             "inputs": [
               {
@@ -3066,7 +3066,7 @@
               46
             ],
             "flags": {},
-            "order": 18,
+            "order": 19,
             "mode": 0,
             "inputs": [
               {
@@ -3100,70 +3100,6 @@
             "widgets_values": []
           },
           {
-            "id": 397,
-            "type": "Trellis2ImageCondGenerator",
-            "pos": [
-              -903.9659631794001,
-              -978.2409763036111
-            ],
-            "size": [
-              308.0748046875,
-              98
-            ],
-            "flags": {},
-            "order": 1,
-            "mode": 0,
-            "inputs": [
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "link": 602
-              },
-              {
-                "localized_name": "image",
-                "name": "image",
-                "type": "IMAGE",
-                "link": 1949
-              }
-            ],
-            "outputs": [
-              {
-                "localized_name": "cond_512",
-                "name": "cond_512",
-                "type": "IMAGE_COND",
-                "links": [
-                  605,
-                  607
-                ]
-              },
-              {
-                "localized_name": "cond_1024",
-                "name": "cond_1024",
-                "type": "IMAGE_COND",
-                "links": [
-                  1954
-                ]
-              },
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "links": [
-                  604
-                ]
-              }
-            ],
-            "properties": {
-              "aux_id": "visualbruno/ComfyUI-Trellis2",
-              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
-              "Node name for S&R": "Trellis2ImageCondGenerator"
-            },
-            "widgets_values": [
-              1
-            ]
-          },
-          {
             "id": 1522,
             "type": "Trellis2Continue",
             "pos": [
@@ -3175,7 +3111,7 @@
               46
             ],
             "flags": {},
-            "order": 24,
+            "order": 25,
             "mode": 0,
             "inputs": [
               {
@@ -3228,7 +3164,7 @@
             "flags": {
               "collapsed": false
             },
-            "order": 22,
+            "order": 23,
             "mode": 0,
             "inputs": [
               {
@@ -3263,163 +3199,6 @@
             ]
           },
           {
-            "id": 398,
-            "type": "Trellis2SparseGenerator",
-            "pos": [
-              -937.6977878121897,
-              -822.7688735716648
-            ],
-            "size": [
-              395.65625,
-              314
-            ],
-            "flags": {},
-            "order": 2,
-            "mode": 0,
-            "inputs": [
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "link": 604
-              },
-              {
-                "localized_name": "image_cond",
-                "name": "image_cond",
-                "type": "IMAGE_COND",
-                "link": 605
-              },
-              {
-                "localized_name": "seed",
-                "name": "seed",
-                "type": "INT",
-                "widget": {
-                  "name": "seed"
-                },
-                "link": 1748
-              }
-            ],
-            "outputs": [
-              {
-                "localized_name": "coords",
-                "name": "coords",
-                "type": "COORDS",
-                "links": [
-                  608
-                ]
-              },
-              {
-                "localized_name": "sparse_structure_resolution",
-                "name": "sparse_structure_resolution",
-                "type": "INT",
-                "links": []
-              },
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "links": [
-                  606
-                ]
-              }
-            ],
-            "properties": {
-              "aux_id": "visualbruno/ComfyUI-Trellis2",
-              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
-              "Node name for S&R": "Trellis2SparseGenerator"
-            },
-            "widgets_values": [
-              12345,
-              "fixed",
-              25,
-              6.5,
-              0.05,
-              4,
-              "euler",
-              32,
-              0.1,
-              1
-            ]
-          },
-          {
-            "id": 401,
-            "type": "Trellis2DecodeLatents",
-            "pos": [
-              -421.989979110331,
-              -444.05329782599284
-            ],
-            "size": [
-              270,
-              122
-            ],
-            "flags": {},
-            "order": 4,
-            "mode": 0,
-            "inputs": [
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "link": 1957
-              },
-              {
-                "localized_name": "shape_slat",
-                "name": "shape_slat",
-                "type": "SHAPE_SLAT",
-                "link": 1951
-              },
-              {
-                "localized_name": "texture_slat",
-                "name": "texture_slat",
-                "shape": 7,
-                "type": "TEXTURE_SLAT",
-                "link": 1956
-              },
-              {
-                "localized_name": "resolution",
-                "name": "resolution",
-                "type": "INT",
-                "widget": {
-                  "name": "resolution"
-                },
-                "link": 1952
-              }
-            ],
-            "outputs": [
-              {
-                "localized_name": "mesh",
-                "name": "mesh",
-                "type": "MESHWITHVOXEL",
-                "links": [
-                  618
-                ]
-              },
-              {
-                "localized_name": "bvh",
-                "name": "bvh",
-                "type": "BVH",
-                "links": [
-                  1959
-                ]
-              },
-              {
-                "localized_name": "pipeline",
-                "name": "pipeline",
-                "type": "TRELLIS2PIPELINE",
-                "links": []
-              }
-            ],
-            "properties": {
-              "aux_id": "visualbruno/ComfyUI-Trellis2",
-              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
-              "Node name for S&R": "Trellis2DecodeLatents"
-            },
-            "widgets_values": [
-              0,
-              true
-            ]
-          },
-          {
             "id": 1593,
             "type": "Trellis2UnWrapAndRasterizer",
             "pos": [
@@ -3431,7 +3210,7 @@
               314
             ],
             "flags": {},
-            "order": 28,
+            "order": 29,
             "mode": 0,
             "inputs": [
               {
@@ -3499,7 +3278,7 @@
               274
             ],
             "flags": {},
-            "order": 19,
+            "order": 20,
             "mode": 0,
             "inputs": [
               {
@@ -3549,7 +3328,7 @@
               46
             ],
             "flags": {},
-            "order": 9,
+            "order": 10,
             "mode": 0,
             "inputs": [
               {
@@ -3594,7 +3373,7 @@
               46
             ],
             "flags": {},
-            "order": 23,
+            "order": 24,
             "mode": 0,
             "inputs": [
               {
@@ -3636,25 +3415,247 @@
             "widgets_values": []
           },
           {
-            "id": 1592,
-            "type": "Trellis2TexSlatGenerator",
+            "id": 398,
+            "type": "Trellis2SparseGenerator",
             "pos": [
-              -447.5816740786433,
-              -782.8914324686799
+              -937.6977878121897,
+              -822.7688735716648
             ],
             "size": [
-              340.390625,
-              266
+              395.65625,
+              314
             ],
             "flags": {},
-            "order": 27,
+            "order": 3,
             "mode": 0,
             "inputs": [
               {
                 "localized_name": "pipeline",
                 "name": "pipeline",
                 "type": "TRELLIS2PIPELINE",
-                "link": 1953
+                "link": 604
+              },
+              {
+                "localized_name": "image_cond",
+                "name": "image_cond",
+                "type": "IMAGE_COND",
+                "link": 605
+              },
+              {
+                "localized_name": "seed",
+                "name": "seed",
+                "type": "INT",
+                "widget": {
+                  "name": "seed"
+                },
+                "link": 1748
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "coords",
+                "name": "coords",
+                "type": "COORDS",
+                "links": [
+                  608
+                ]
+              },
+              {
+                "localized_name": "sparse_structure_resolution",
+                "name": "sparse_structure_resolution",
+                "type": "INT",
+                "links": [
+                  1964
+                ]
+              },
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "links": [
+                  606
+                ]
+              }
+            ],
+            "properties": {
+              "aux_id": "visualbruno/ComfyUI-Trellis2",
+              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
+              "Node name for S&R": "Trellis2SparseGenerator"
+            },
+            "widgets_values": [
+              12345,
+              "fixed",
+              25,
+              6.5,
+              0.05,
+              4,
+              "euler",
+              32,
+              0.1,
+              1
+            ]
+          },
+          {
+            "id": 397,
+            "type": "Trellis2ImageCondGenerator",
+            "pos": [
+              -903.9659631794001,
+              -978.2409763036111
+            ],
+            "size": [
+              308.0748046875,
+              98
+            ],
+            "flags": {},
+            "order": 2,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "link": 602
+              },
+              {
+                "localized_name": "image",
+                "name": "image",
+                "type": "IMAGE",
+                "link": 1949
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "cond_512",
+                "name": "cond_512",
+                "type": "IMAGE_COND",
+                "links": [
+                  605,
+                  607
+                ]
+              },
+              {
+                "localized_name": "cond_1024",
+                "name": "cond_1024",
+                "type": "IMAGE_COND",
+                "links": [
+                  1954,
+                  1968
+                ]
+              },
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "links": [
+                  604
+                ]
+              }
+            ],
+            "properties": {
+              "aux_id": "visualbruno/ComfyUI-Trellis2",
+              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
+              "Node name for S&R": "Trellis2ImageCondGenerator"
+            },
+            "widgets_values": [
+              1
+            ]
+          },
+          {
+            "id": 399,
+            "type": "Trellis2ShapeGenerator",
+            "pos": [
+              -894.0351529198377,
+              -442.4627077314988
+            ],
+            "size": [
+              335.24609375,
+              266
+            ],
+            "flags": {},
+            "order": 4,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "link": 606
+              },
+              {
+                "localized_name": "image_cond",
+                "name": "image_cond",
+                "type": "IMAGE_COND",
+                "link": 607
+              },
+              {
+                "localized_name": "coords",
+                "name": "coords",
+                "type": "COORDS",
+                "link": 608
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "shape_slat",
+                "name": "shape_slat",
+                "type": "SHAPE_SLAT",
+                "links": [
+                  1969
+                ]
+              },
+              {
+                "localized_name": "resolution",
+                "name": "resolution",
+                "type": "INT",
+                "links": [
+                  1962
+                ]
+              },
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "links": [
+                  1967
+                ]
+              }
+            ],
+            "properties": {
+              "aux_id": "visualbruno/ComfyUI-Trellis2",
+              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
+              "Node name for S&R": "Trellis2ShapeGenerator"
+            },
+            "widgets_values": [
+              512,
+              12,
+              5,
+              0.05,
+              4,
+              "euler",
+              0.1,
+              1
+            ]
+          },
+          {
+            "id": 1592,
+            "type": "Trellis2TexSlatGenerator",
+            "pos": [
+              -454.5028638202983,
+              -558.2309383058608
+            ],
+            "size": [
+              340.390625,
+              266
+            ],
+            "flags": {},
+            "order": 28,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "link": 1966
               },
               {
                 "localized_name": "image_cond",
@@ -3666,7 +3667,7 @@
                 "localized_name": "shape_slat",
                 "name": "shape_slat",
                 "type": "SHAPE_SLAT",
-                "link": 1955
+                "link": 1970
               }
             ],
             "outputs": [
@@ -3698,43 +3699,61 @@
               3,
               0.2,
               3,
-              "heun",
+              "euler",
               0,
               0.9
             ]
           },
           {
-            "id": 399,
-            "type": "Trellis2ShapeGenerator",
+            "id": 1594,
+            "type": "Trellis2ShapeCascadeGenerator",
             "pos": [
-              -894.0351529198377,
-              -442.4627077314988
+              -453.47400323886586,
+              -947.8473033595873
             ],
             "size": [
-              335.24609375,
-              266
+              335.9791015625,
+              338
             ],
             "flags": {},
-            "order": 3,
+            "order": 1,
             "mode": 0,
             "inputs": [
               {
                 "localized_name": "pipeline",
                 "name": "pipeline",
                 "type": "TRELLIS2PIPELINE",
-                "link": 606
+                "link": 1967
               },
               {
                 "localized_name": "image_cond",
                 "name": "image_cond",
                 "type": "IMAGE_COND",
-                "link": 607
+                "link": 1968
               },
               {
-                "localized_name": "coords",
-                "name": "coords",
-                "type": "COORDS",
-                "link": 608
+                "localized_name": "shape_slat",
+                "name": "shape_slat",
+                "type": "SHAPE_SLAT",
+                "link": 1969
+              },
+              {
+                "localized_name": "from_resolution",
+                "name": "from_resolution",
+                "type": "INT",
+                "widget": {
+                  "name": "from_resolution"
+                },
+                "link": 1962
+              },
+              {
+                "localized_name": "sparse_structure_resolution",
+                "name": "sparse_structure_resolution",
+                "type": "INT",
+                "widget": {
+                  "name": "sparse_structure_resolution"
+                },
+                "link": 1964
               }
             ],
             "outputs": [
@@ -3743,8 +3762,8 @@
                 "name": "shape_slat",
                 "type": "SHAPE_SLAT",
                 "links": [
-                  1951,
-                  1955
+                  1970,
+                  1971
                 ]
               },
               {
@@ -3752,7 +3771,7 @@
                 "name": "resolution",
                 "type": "INT",
                 "links": [
-                  1952
+                  1963
                 ]
               },
               {
@@ -3760,24 +3779,105 @@
                 "name": "pipeline",
                 "type": "TRELLIS2PIPELINE",
                 "links": [
-                  1953
+                  1966
                 ]
               }
             ],
             "properties": {
               "aux_id": "visualbruno/ComfyUI-Trellis2",
-              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
-              "Node name for S&R": "Trellis2ShapeGenerator"
+              "ver": "86f063655a00bcb3a325273ec941899cc06fd115",
+              "Node name for S&R": "Trellis2ShapeCascadeGenerator"
             },
             "widgets_values": [
+              0,
               1024,
-              25,
+              32,
+              999999,
+              12,
               5,
               0.05,
               4,
-              "heun",
+              "euler",
               0.1,
               1
+            ]
+          },
+          {
+            "id": 401,
+            "type": "Trellis2DecodeLatents",
+            "pos": [
+              -440.8021373134558,
+              -235.9077839099774
+            ],
+            "size": [
+              270,
+              122
+            ],
+            "flags": {},
+            "order": 5,
+            "mode": 0,
+            "inputs": [
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "link": 1957
+              },
+              {
+                "localized_name": "shape_slat",
+                "name": "shape_slat",
+                "type": "SHAPE_SLAT",
+                "link": 1971
+              },
+              {
+                "localized_name": "texture_slat",
+                "name": "texture_slat",
+                "shape": 7,
+                "type": "TEXTURE_SLAT",
+                "link": 1956
+              },
+              {
+                "localized_name": "resolution",
+                "name": "resolution",
+                "type": "INT",
+                "widget": {
+                  "name": "resolution"
+                },
+                "link": 1963
+              }
+            ],
+            "outputs": [
+              {
+                "localized_name": "mesh",
+                "name": "mesh",
+                "type": "MESHWITHVOXEL",
+                "links": [
+                  618
+                ]
+              },
+              {
+                "localized_name": "bvh",
+                "name": "bvh",
+                "type": "BVH",
+                "links": [
+                  1959
+                ]
+              },
+              {
+                "localized_name": "pipeline",
+                "name": "pipeline",
+                "type": "TRELLIS2PIPELINE",
+                "links": []
+              }
+            ],
+            "properties": {
+              "aux_id": "visualbruno/ComfyUI-Trellis2",
+              "ver": "ef2286b47ce0ef0e681dffe0209aadd96de50f72",
+              "Node name for S&R": "Trellis2DecodeLatents"
+            },
+            "widgets_values": [
+              0,
+              true
             ]
           }
         ],
@@ -4088,44 +4188,12 @@
             "type": "IMAGE"
           },
           {
-            "id": 1951,
-            "origin_id": 399,
-            "origin_slot": 0,
-            "target_id": 401,
-            "target_slot": 1,
-            "type": "SHAPE_SLAT"
-          },
-          {
-            "id": 1952,
-            "origin_id": 399,
-            "origin_slot": 1,
-            "target_id": 401,
-            "target_slot": 3,
-            "type": "INT"
-          },
-          {
-            "id": 1953,
-            "origin_id": 399,
-            "origin_slot": 2,
-            "target_id": 1592,
-            "target_slot": 0,
-            "type": "TRELLIS2PIPELINE"
-          },
-          {
             "id": 1954,
             "origin_id": 397,
             "origin_slot": 1,
             "target_id": 1592,
             "target_slot": 1,
             "type": "IMAGE_COND"
-          },
-          {
-            "id": 1955,
-            "origin_id": 399,
-            "origin_slot": 0,
-            "target_id": 1592,
-            "target_slot": 2,
-            "type": "SHAPE_SLAT"
           },
           {
             "id": 1956,
@@ -4166,6 +4234,78 @@
             "target_id": 1518,
             "target_slot": 0,
             "type": "TRIMESH"
+          },
+          {
+            "id": 1962,
+            "origin_id": 399,
+            "origin_slot": 1,
+            "target_id": 1594,
+            "target_slot": 3,
+            "type": "INT"
+          },
+          {
+            "id": 1963,
+            "origin_id": 1594,
+            "origin_slot": 1,
+            "target_id": 401,
+            "target_slot": 3,
+            "type": "INT"
+          },
+          {
+            "id": 1964,
+            "origin_id": 398,
+            "origin_slot": 1,
+            "target_id": 1594,
+            "target_slot": 4,
+            "type": "INT"
+          },
+          {
+            "id": 1966,
+            "origin_id": 1594,
+            "origin_slot": 2,
+            "target_id": 1592,
+            "target_slot": 0,
+            "type": "TRELLIS2PIPELINE"
+          },
+          {
+            "id": 1967,
+            "origin_id": 399,
+            "origin_slot": 2,
+            "target_id": 1594,
+            "target_slot": 0,
+            "type": "TRELLIS2PIPELINE"
+          },
+          {
+            "id": 1968,
+            "origin_id": 397,
+            "origin_slot": 1,
+            "target_id": 1594,
+            "target_slot": 1,
+            "type": "IMAGE_COND"
+          },
+          {
+            "id": 1969,
+            "origin_id": 399,
+            "origin_slot": 0,
+            "target_id": 1594,
+            "target_slot": 2,
+            "type": "SHAPE_SLAT"
+          },
+          {
+            "id": 1970,
+            "origin_id": 1594,
+            "origin_slot": 0,
+            "target_id": 1592,
+            "target_slot": 2,
+            "type": "SHAPE_SLAT"
+          },
+          {
+            "id": 1971,
+            "origin_id": 1594,
+            "origin_slot": 0,
+            "target_id": 401,
+            "target_slot": 1,
+            "type": "SHAPE_SLAT"
           }
         ],
         "extra": {
@@ -4177,8 +4317,8 @@
         "version": 1,
         "state": {
           "lastGroupId": 31,
-          "lastNodeId": 1593,
-          "lastLinkId": 1961,
+          "lastNodeId": 1594,
+          "lastLinkId": 1971,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -8692,8 +8832,8 @@
         "version": 1,
         "state": {
           "lastGroupId": 31,
-          "lastNodeId": 1593,
-          "lastLinkId": 1961,
+          "lastNodeId": 1594,
+          "lastLinkId": 1971,
           "lastRerouteId": 0
         },
         "revision": 0,
@@ -9145,10 +9285,10 @@
     "VHS_MetadataImage": true,
     "VHS_KeepIntermediate": true,
     "ds": {
-      "scale": 0.6137686715508867,
+      "scale": 0.5579715195917152,
       "offset": [
-        1209.5539962894127,
-        774.6082730632215
+        2429.4499539865133,
+        1680.4481637736892
       ]
     }
   },
