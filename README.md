@@ -14,6 +14,7 @@
 
 | Date | Description |
 | --- | --- |
+| **2026-04-01** | Added node "Voxel to Mesh"<br>It replaces Remeshing<br>Added "Blackwell Fix" in "Load Model" node |
 | **2026-03-21** | Added node "Projection HighPoly to LowPoly"<br>Added node "Render MultiView" |
 | **2026-03-17** | Added Inpainting Choice NS and TELEA |
 | **2026-03-14** | Added Experimental node "Projection MultiView Texturing"<br>Check in example_workflows folder |
@@ -155,3 +156,9 @@ python -m pip install -r ComfyUI/custom_nodes/ComfyUI-Trellis2/requirements.txt
 ```bash
 python_embeded\python.exe -m pip install -r ComfyUI\custom_nodes\ComfyUI-Trellis2\requirements.txt
 ```
+
+## 🙏 Acknowledgements
+
+Discord community
+
+"Blackwell Fix" from https://github.com/ThatButters/trellis2-blackwell-fix

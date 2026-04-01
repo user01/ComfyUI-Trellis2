@@ -328,6 +328,7 @@ class Trellis2LoadModel:
                 "device": (["cpu","cuda"],{"default":"cuda"}),
                 "low_vram": ("BOOLEAN",{"default":True}),
                 "keep_models_loaded": ("BOOLEAN", {"default":True}),
+                "fix_blackwell": ("BOOLEAN",{"default":False}),
             },
         }
 
@@ -337,7 +338,11 @@ class Trellis2LoadModel:
     CATEGORY = "Trellis2Wrapper"
     OUTPUT_NODE = True
 
-    def process(self, modelname, backend, device, low_vram, keep_models_loaded):
+    def process(self, modelname, backend, device, low_vram, keep_models_loaded, fix_blackwell):
+        if fix_blackwell:
+            from .blackwell_fix import patch_all
+            patch_all()        
+        
         os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '1'
         os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"  # Can save GPU memory
         #os.environ["FLEX_GEMM_AUTOTUNE_CACHE_PATH"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'autotune_cache.json')
@@ -4567,6 +4572,47 @@ class Trellis2SaveImage:
             
         return (file_list,)
         
+class Trellis2VoxelToMesh:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "mesh": ("MESHWITHVOXEL",),
+                "target_height_mm": ("FLOAT",{"default":0.0,"min":0.0,"max":500.0,"step":0.1}),
+                "sigma": ("FLOAT",{"default":0.0,"min":0.0,"max":9.9,"step":0.1}),
+                "coarse_downsample": ("INT",{"default":1,"min":1,"max":9,"step":1}),
+                "taubin_iterations": ("INT",{"default":0,"min":0,"max":999,"step":1}),
+            },
+        }
+
+    RETURN_TYPES = ("MESHWITHVOXEL",)
+    RETURN_NAMES = ("mesh",)
+    FUNCTION = "process"
+    CATEGORY = "Trellis2Wrapper"
+    OUTPUT_NODE = True
+
+    def process(self, mesh, target_height_mm, sigma, coarse_downsample, taubin_iterations):
+        mesh_copy = copy.deepcopy(mesh)
+        
+        if mesh_copy.coords is None:
+            raise Exception("Voxel to Mesh requires Texture Slat")
+        else:
+            from .blackwell_fix import voxel_to_mesh
+            
+            trimesh = voxel_to_mesh(mesh_output = mesh_copy, 
+                                    target_height_mm = target_height_mm,
+                                    sigma = sigma,
+                                    coarse_downsample = coarse_downsample,
+                                    taubin_iterations = taubin_iterations,
+                                    verbose = True)
+
+            mesh_copy.vertices = torch.from_numpy(trimesh.vertices).float()
+            mesh_copy.faces = torch.from_numpy(trimesh.faces).int()
+        
+            del trimesh
+        
+        return (mesh_copy,)
+        
 NODE_CLASS_MAPPINGS = {
     "Trellis2LoadModel": Trellis2LoadModel,
     "Trellis2MeshWithVoxelGenerator": Trellis2MeshWithVoxelGenerator,
@@ -4621,6 +4667,7 @@ NODE_CLASS_MAPPINGS = {
     "Trellis2ProjectHighPolyToLowPoly": Trellis2ProjectHighPolyToLowPoly,
     "Trellis2RenderMultiView": Trellis2RenderMultiView,
     "Trellis2SaveImage": Trellis2SaveImage,
+    "Trellis2VoxelToMesh": Trellis2VoxelToMesh,
     }
     
 
@@ -4678,4 +4725,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Trellis2ProjectHighPolyToLowPoly": "Trellis2 - Projection HighPoly To LowPoly",
     "Trellis2RenderMultiView": "Trellis2 - Render MultiView",
     "Trellis2SaveImage": "Trellis2 - Save Image",
+    "Trellis2VoxelToMesh": "Trellis2 - Voxel to Mesh",
     }
