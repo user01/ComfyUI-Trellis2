@@ -16,7 +16,9 @@ def sparse_conv3d_init(self, in_channels, out_channels, kernel_size, stride=1, d
     else:
         self.conv = spconv.SparseConv3d(in_channels, out_channels, kernel_size, stride=stride, dilation=dilation, padding=padding, bias=bias, indice_key=indice_key, algo=algo)
     self.stride = tuple(stride) if isinstance(stride, (list, tuple)) else (stride, stride, stride)
-    self.padding = padding  
+    self.padding = padding
+    self.weight = self.conv.weight
+    self.bias = self.conv.bias
 
 
 def sparse_conv3d_forward(self, x: SparseTensor) -> SparseTensor:
@@ -50,7 +52,8 @@ def sparse_conv3d_forward(self, x: SparseTensor) -> SparseTensor:
 def sparse_inverse_conv3d_init(self, in_channels, out_channels, kernel_size, stride=1, dilation=1, bias=True, indice_key=None):
     self.conv = spconv.SparseInverseConv3d(in_channels, out_channels, kernel_size, bias=bias, indice_key=indice_key)
     self.stride = tuple(stride) if isinstance(stride, (list, tuple)) else (stride, stride, stride)
-
+    self.weight = self.conv.weight
+    self.bias = self.conv.bias
 
 def sparse_inverse_conv3d_forward(self, x: SparseTensor) -> SparseTensor:
     spatial_changed = any(s != 1 for s in self.stride)
