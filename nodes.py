@@ -2383,20 +2383,58 @@ class Trellis2PreProcessImage:
     CATEGORY = "Trellis2Wrapper"
 
     def process(self, image, padding, remove_background, max_size):
-        image = tensor2pil(image)
-        
-        if remove_background:
-            from rembg import remove
-            image = remove(image)
-        
-        image = self.preprocess_image(image, max_size)
-        
-        if padding>0:
-            border = (int(padding), int(padding), int(padding), int(padding))
-            fill_color = self.parse_fill_for_image("0,0,0,255", image)
-            image = ImageOps.expand(image,border=border,fill=fill_color)
-        
-        image = pil2tensor(image)
+        if image.ndim == 3:
+            image = tensor2pil(image)
+            
+            if remove_background:
+                from rembg import remove
+                image = remove(image)
+            
+            image = self.preprocess_image(image, max_size)
+            
+            if padding>0:
+                border = (int(padding), int(padding), int(padding), int(padding))
+                fill_color = self.parse_fill_for_image("0,0,0,255", image)
+                image = ImageOps.expand(image,border=border,fill=fill_color)
+            
+            image = pil2tensor(image)
+        elif image.ndim == 4:
+            images = convert_tensor_images_to_pil(image)
+            tensor_list = []
+            for img in images:
+                if remove_background:
+                    from rembg import remove
+                    img = remove(img)
+                
+                img = self.preprocess_image(img, max_size)
+                
+                if padding>0:
+                    border = (int(padding), int(padding), int(padding), int(padding))
+                    fill_color = self.parse_fill_for_image("0,0,0,255", img)
+                    img = ImageOps.expand(img,border=border,fill=fill_color)
+                
+                tensor_list.append(pil2tensor(img))
+                
+                max_h = max(t.shape[-3] for t in tensor_list)
+                max_w = max(t.shape[-2] for t in tensor_list)
+
+                resized_tensors = []
+
+                for t in tensor_list:
+                    # Ensure tensor is [C, H, W] for PyTorch's interpolate function
+                    # Current shape is likely [H, W, C] or [1, H, W, C]
+                    temp_t = t.squeeze() # Get to [H, W, C]
+                    temp_t = temp_t.permute(2, 0, 1).unsqueeze(0) # Becomes [1, C, H, W]
+                    
+                    # 2. Resize to the max dimensions
+                    # Using 'bicubic' or 'bilinear' for better quality than 'nearest'
+                    temp_t = F.interpolate(temp_t, size=(max_h, max_w), mode='bicubic', align_corners=False)
+                    
+                    # 3. Convert back to ComfyUI format [H, W, C]
+                    temp_t = temp_t.squeeze(0).permute(1, 2, 0)
+                    resized_tensors.append(temp_t)                
+                
+            image = torch.stack(resized_tensors)
         
         return (image,)    
 
@@ -3527,7 +3565,7 @@ class Trellis2ImageCondGenerator:
             "required": {
                 "pipeline": ("TRELLIS2PIPELINE",),
                 "image": ("IMAGE",),
-                "max_views": ("INT", {"default": 4, "min": 1, "max": 16}),
+                "max_views": ("INT", {"default": 1, "min": 1, "max": 999}),
             },
         }
 
@@ -3779,6 +3817,9 @@ class Trellis2ShapeCascadeGenerator:
                 print(f"Num Tokens: {num_tokens}")
                 hr_resolution = 512
                 break
+                
+        if pipeline.low_vram:
+            cond = pipeline._cond_to(cond, pipeline.device)                
         
         coords_dev = coords.to(pipeline.device)                                           
         # Sample structured latent
@@ -4804,7 +4845,7 @@ class Trellis2SparseGeneratorWithReconViaGen:
             pipeline.unload_sparse_structure_vggt_cond()
             self.unload_vggt_model(pipeline)
 
-        return (coords, sparse_structure_resolution, pipeline,)
+        return (coords, sparse_structure_resolution, pipeline)
         
     def load_vggt_model(self, pipeline):
         if pipeline.VGGT_model is None:
@@ -4900,7 +4941,7 @@ class Trellis2SparseGeneratorWithReconViaGen:
             ss_cond = pipeline._cond_cpu(ss_cond)
             torch.cuda.empty_cache()
 
-        return coords 
+        return coords
         
     @torch.no_grad()
     def _run_ss_stage(
@@ -4986,6 +5027,7 @@ class Trellis2SparseGeneratorWithReconViaGen:
         Returns:
             dict: The conditioning information
         """
+        pipeline.models['sparse_structure_vggt_cond'].to(pipeline.device)
         cond = pipeline.models['sparse_structure_vggt_cond'](aggregated_tokens_list, image_cond)
         neg_cond = torch.zeros_like(cond)
         return {
@@ -5059,7 +5101,46 @@ class Trellis2SparseGeneratorWithReconViaGen:
         transform = transforms.Compose([
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
-        pipeline.image_cond_model_transform = transform        
+        pipeline.image_cond_model_transform = transform  
+
+class Trellis2ExtractImagesFromVideo:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "video_file": ("STRING",),
+                "frames_per_second": ("INT",{"default":1,"min":1,"max":50,"step":1}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("images",)
+    FUNCTION = "process"
+    CATEGORY = "Trellis2Wrapper"
+    OUTPUT_NODE = True
+
+    def process(self, video_file, frames_per_second):
+        import imageio
+        
+        vid = imageio.get_reader(video_file, 'ffmpeg')
+        fps = vid.get_meta_data()['fps']
+        frames = []
+        for i, frame in enumerate(vid):
+            if i % max(int(fps/frames_per_second), 1) == 0:
+                img = Image.fromarray(frame)
+                W, H = img.size
+                img = img.resize((int(W / H * 1024), 1024))
+                frames.append(img)
+        vid.close()
+        
+        tensor_list = [torch.from_numpy(np.array(img).astype(np.float32) / 255.0) for img in frames]
+            
+        print(f"{len(frames)} frames extracted")
+        
+        tensor_frames = torch.stack(tensor_list)
+        #tensor_frames = tensor_frames.permute(0, 2, 3, 1)
+        
+        return (tensor_frames,)
         
 NODE_CLASS_MAPPINGS = {
     "Trellis2LoadModel": Trellis2LoadModel,
@@ -5118,6 +5199,7 @@ NODE_CLASS_MAPPINGS = {
     "Trellis2VoxelToMesh": Trellis2VoxelToMesh,
     "Trellis2UnloadAllModels": Trellis2UnloadAllModels,
     "Trellis2SparseGeneratorWithReconViaGen": Trellis2SparseGeneratorWithReconViaGen,
+    "Trellis2ExtractImagesFromVideo": Trellis2ExtractImagesFromVideo,
     }
     
 
@@ -5178,4 +5260,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Trellis2VoxelToMesh": "Trellis2 - Voxel to Mesh",
     "Trellis2UnloadAllModels": "Trellis2 - Unload All ComfyUI Models",
     "Trellis2SparseGeneratorWithReconViaGen": "Trellis2 - Sparse Generator with ReconViaGen",
+    "Trellis2ExtractImagesFromVideo": "Trellis 2 - Extract Images from Video",
     }

@@ -14,6 +14,7 @@
 
 | Date | Description |
 | --- | --- |
+| **2026-04-05** | Added node "Extract Images from Video"<br>Can be used with "Sparse Generator with ReconViaGen" |
 | **2026-04-04** | Added node "Sparse Generator with ReconViaGen" |
 | **2026-04-01** | Added node "Voxel to Mesh"<br>It replaces Remeshing to make watertight mesh |
 | **2026-03-21** | Added node "Projection HighPoly to LowPoly"<br>Added node "Render MultiView" |
