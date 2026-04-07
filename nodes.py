@@ -3941,8 +3941,8 @@ class Trellis2ShapeCascadeGenerator:
             },
         }
 
-    RETURN_TYPES = ("SHAPE_SLAT","INT","TRELLIS2PIPELINE",)
-    RETURN_NAMES = ("shape_slat","resolution","pipeline",)
+    RETURN_TYPES = ("SHAPE_SLAT","INT","TRELLIS2PIPELINE","INT",)
+    RETURN_NAMES = ("shape_slat","resolution","pipeline","num_tokens")
     FUNCTION = "process"
     CATEGORY = "Trellis2Wrapper"
     OUTPUT_NODE = True
@@ -3969,12 +3969,12 @@ class Trellis2ShapeCascadeGenerator:
         shape_sampler_prefix = pipeline.GetSamplerName(shape_sampler)
         pipeline.shape_slat_sampler = getattr(samplers, f"Flow{shape_sampler_prefix}GuidanceIntervalSampler")(**args['shape_slat_sampler']['args'])
         pipeline.load_shape_slat_flow_model_1024()           
-        slat, hr_resolution = self.sample(pipeline, shape_slat, from_resolution, to_resolution, sparse_structure_resolution, max_num_tokens, image_cond, shape_slat_sampler_params, pipeline.models['shape_slat_flow_model_1024'], verbose, dino_lock, dino_substeps, dino_foundation_cap)
+        slat, hr_resolution, num_tokens = self.sample(pipeline, shape_slat, from_resolution, to_resolution, sparse_structure_resolution, max_num_tokens, image_cond, shape_slat_sampler_params, pipeline.models['shape_slat_flow_model_1024'], verbose, dino_lock, dino_substeps, dino_foundation_cap)
         
         if not pipeline.keep_models_loaded:
             pipeline.unload_shape_slat_flow_model_1024()              
         
-        return (slat, hr_resolution, pipeline,)         
+        return (slat, hr_resolution, pipeline, num_tokens,)         
         
     def sample(self, pipeline, slat, lr_resolution, resolution, sparse_structure_resolution, max_num_tokens, cond, sampler_params, flow_model, verbose, dino_lock, dino_substeps, dino_foundation_cap):
         # Upsample       
@@ -4051,7 +4051,7 @@ class Trellis2ShapeCascadeGenerator:
             cond = pipeline._cond_cpu(cond)
             pipeline._cleanup_cuda()
 
-        return slat, hr_resolution 
+        return slat, hr_resolution, num_tokens 
 
 class Trellis2TexSlatGenerator:
     @classmethod

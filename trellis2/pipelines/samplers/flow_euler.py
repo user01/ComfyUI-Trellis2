@@ -154,8 +154,8 @@ class DinoLockMixin:
         self,
         model,
         noise,
-        cond,
-        neg_cond,
+        cond=None,
+        neg_cond=None,
         steps: int = 50,
         rescale_t: float = 1.0,
         guidance_strength: float = 3.0,
@@ -172,6 +172,15 @@ class DinoLockMixin:
         kwargs.pop("rk4_cond_lock_end_strength", None)
         kwargs.pop("debug_dino_alignment", None)
         kwargs.pop("debug_dino_interval", None)
+
+        # Multiview path: cond/neg_cond not provided (per-view conds are in kwargs)
+        if cond is None:
+            return super().sample(model, noise,
+                                  steps=steps, rescale_t=rescale_t, verbose=verbose,
+                                  tqdm_desc=tqdm_desc,
+                                  guidance_strength=guidance_strength,
+                                  guidance_interval=guidance_interval,
+                                  **kwargs)
 
         if dino_lock <= 0.0:
             return super().sample(model, noise, cond, steps, rescale_t, verbose,
@@ -606,7 +615,7 @@ class FlowEulerMultiViewSampler(FlowEulerSampler):
         return ret
 
 
-class FlowEulerMultiViewGuidanceIntervalSampler(GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowEulerMultiViewSampler):
+class FlowEulerMultiViewGuidanceIntervalSampler(DinoLockMixin, GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowEulerMultiViewSampler):
     """
     Generate samples from a flow-matching model using Euler sampling with multi-view blending, CFG, and guidance interval.
     """
@@ -820,10 +829,10 @@ class FlowRK5MultiViewSampler(FlowEulerMultiViewSampler):
         return edict({"pred_x_prev": pred_x_prev, "pred_x_0": pred_x_0})
 
 
-class FlowRK4MultiViewGuidanceIntervalSampler(GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowRK4MultiViewSampler):
+class FlowRK4MultiViewGuidanceIntervalSampler(DinoLockMixin, GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowRK4MultiViewSampler):
     pass
 
-class FlowRK5MultiViewGuidanceIntervalSampler(GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowRK5MultiViewSampler):
+class FlowRK5MultiViewGuidanceIntervalSampler(DinoLockMixin, GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowRK5MultiViewSampler):
     pass
 
 # Heun (RK2)
@@ -927,5 +936,5 @@ class FlowHeunMultiViewSampler(FlowEulerMultiViewSampler):
         return edict({"pred_x_prev": pred_x_prev, "pred_x_0": pred_x_0})
 
 # --- CFG Wrapper for Heun Multi-View ---
-class FlowHeunMultiViewGuidanceIntervalSampler(GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowHeunMultiViewSampler):
+class FlowHeunMultiViewGuidanceIntervalSampler(DinoLockMixin, GuidanceIntervalSamplerMixin, ClassifierFreeGuidanceSamplerMixin, FlowHeunMultiViewSampler):
     pass    
