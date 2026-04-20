@@ -14,7 +14,7 @@
 
 | Date | Description |
 | --- | --- |
-| **2026-04-20** | Added node "Fill Holes Nicely with Meshlib" |
+| **2026-04-20** | Added node "Fill Holes Nicely with Meshlib"<br>Fixed DinoV3 Features Extractor |
 | **2026-04-06** | Added new "DINO-Lock" functionality<br>New fill_holes in Sparse Generator<br>Thanks to Easymode on Discord |
 | **2026-04-05** | Added node "Extract Images from Video"<br>Can be used with "Sparse Generator with ReconViaGen" |
 | **2026-04-04** | Added node "Sparse Generator with ReconViaGen" |
