@@ -1355,7 +1355,7 @@ class Trellis2MeshWithVoxelAdvancedGenerator:
                 "hole_iterations": ("INT",{"default":1,"min":1,"max":9,"step":1}),                
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "hole_fill_algorithm": (["morphological_closing","flood_fill","remove_small_holes"],{"default":"flood_fill"}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "keep_only_shell": ("BOOLEAN",{"default":True}),
@@ -1496,7 +1496,7 @@ class Trellis2MeshWithVoxelMultiViewGenerator:
                 "hole_iterations": ("INT",{"default":1,"min":1,"max":9,"step":1}),                
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "hole_fill_algorithm": (["morphological_closing","flood_fill","remove_small_holes"],{"default":"flood_fill"}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "keep_only_shell": ("BOOLEAN",{"default":True}),
@@ -2278,7 +2278,7 @@ class Trellis2MeshTexturing:
                 "inpainting": (["telea","ns"],{"default":"telea"}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),                
             },
         }
@@ -2354,7 +2354,7 @@ class Trellis2MeshTexturingMultiView:
                 "inpainting": (["telea","ns"],{"default":"telea"}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}), 
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}), 
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
             "optional": {
@@ -2623,7 +2623,7 @@ class Trellis2MeshRefiner:
                 "sampler": (["euler", "heun", "rk4", "rk5"], {"default": "euler"}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
         }
@@ -3051,7 +3051,7 @@ class Trellis2FillHolesWithMeshlib:
             
             last_reported_percent = -1  # Initialize at -1 to ensure 0% triggers an update
             
-            for i, e in enumerate(hole_edges):
+            for i, e in enumerate(hole_edges):                
                 params = mrmeshpy.FillHoleParams()
                 params.metric = mrmeshpy.getUniversalMetric(mesh)
                 mrmeshpy.fillHole(mesh, e, params)
@@ -3089,6 +3089,82 @@ class Trellis2FillHolesWithMeshlib:
         mesh_copy.faces = torch.from_numpy(new_faces).int().to(mesh_copy.device)
         
         return (mesh_copy, holes_filled) 
+        
+class Trellis2FillHolesNicelyWithMeshlib:
+    """Fill all holes in a mesh"""
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "mesh": ("MESHWITHVOXEL",),
+            },
+        }
+    
+    RETURN_TYPES = ("MESHWITHVOXEL", "INT")
+    RETURN_NAMES = ("mesh", "holes_filled")
+    FUNCTION = "process"
+    CATEGORY = "Trellis2Wrapper"
+    DESCRIPTION = "Fill all holes in a mesh using optimal triangulation."
+
+    def process(self, mesh):
+        import meshlib.mrmeshpy as mrmeshpy
+        
+        mesh_copy = copy.deepcopy(mesh)
+        mesh = mrmeshnumpy.meshFromFacesVerts(mesh_copy.faces.detach().clone().cpu().numpy(), mesh_copy.vertices.detach().clone().cpu().numpy())
+        
+        hole_edges = mesh.topology.findHoleRepresentiveEdges()
+        holes_filled = 0
+        
+        nb_holes = len(hole_edges)
+        print(f"{nb_holes} holes found")
+
+        if nb_holes > 0:
+            progress_bar = tqdm(total=nb_holes, desc="Filling holes")
+            pbar = ProgressBar(nb_holes)
+            
+            last_reported_percent = -1  # Initialize at -1 to ensure 0% triggers an update
+            
+            for i, e in enumerate(hole_edges):          
+                params = mrmeshpy.FillHoleNicelySettings()
+                params.triangulateParams.metric = mrmeshpy.getMinAreaMetric(mesh)
+                params.smoothCurvature = False
+                #  Fill hole represented by `e`
+                mrmeshpy.fillHoleNicely(mesh, e, params)
+                
+                # Calculate current progress
+                current_step = i + 1
+                current_percent = int((current_step / nb_holes) * 100)
+                
+                # Only update the UI if the percentage has moved up
+                if current_percent > last_reported_percent:
+                    # Calculate how many holes have been filled since the last UI update
+                    # This handles cases where 1% might represent multiple holes
+                    if last_reported_percent == -1:
+                        # First update
+                        progress_bar.update(current_step)
+                        pbar.update(current_step)
+                    else:
+                        # Update by the difference since the last check
+                        last_step = int((last_reported_percent * nb_holes) / 100)
+                        diff = current_step - last_step
+                        progress_bar.update(diff)
+                        pbar.update(diff)
+                    
+                    last_reported_percent = current_percent
+                        
+            progress_bar.close()            
+        
+        new_vertices = mrmeshnumpy.getNumpyVerts(mesh)
+        new_faces = mrmeshnumpy.getNumpyFaces(mesh.topology)
+
+        del mesh
+        gc.collect()
+        
+        mesh_copy.vertices = torch.from_numpy(new_vertices).float().to(mesh_copy.device)
+        mesh_copy.faces = torch.from_numpy(new_faces).int().to(mesh_copy.device)
+        
+        return (mesh_copy, holes_filled)         
         
 class Trellis2SmoothNormals:    
     @classmethod
@@ -3581,7 +3657,7 @@ class Trellis2MeshWithVoxelCascadeGenerator:
                 "hole_iterations": ("INT",{"default":1,"min":1,"max":9,"step":1}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),      
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),      
                 "hole_fill_algorithm": (["morphological_closing","flood_fill","remove_small_holes"],{"default":"flood_fill"}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "keep_only_shell": ("BOOLEAN",{"default":True}),
@@ -3763,7 +3839,7 @@ class Trellis2SparseGenerator:
                 "hole_iterations": ("INT",{"default":1,"min":1,"max":9,"step":1}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "hole_fill_algorithm": (["morphological_closing","flood_fill","remove_small_holes"],{"default":"flood_fill"}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "keep_only_shell": ("BOOLEAN",{"default":True}),
@@ -3851,7 +3927,7 @@ class Trellis2ShapeGenerator:
                 "shape_guidance_interval_end": ("FLOAT",{"default":1.00,"min":0.00,"max":1.00,"step":0.01}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),                
             },
         }
@@ -3936,7 +4012,7 @@ class Trellis2ShapeCascadeGenerator:
                 "shape_guidance_interval_end": ("FLOAT",{"default":1.00,"min":0.00,"max":1.00,"step":0.01}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
         }
@@ -4071,7 +4147,7 @@ class Trellis2TexSlatGenerator:
                 "texture_guidance_interval_end": ("FLOAT",{"default":0.90,"min":0.00,"max":1.00,"step":0.01}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
         }
@@ -5022,7 +5098,7 @@ class Trellis2SparseGeneratorWithReconViaGen:
                 "sparse_structure_guidance_interval_end": ("FLOAT",{"default":1.00,"min":0.00,"max":1.00,"step":0.01}),
                 "verbose": ("BOOLEAN",{"default":False}),
                 "dino_lock": ("FLOAT",{"default":0.00,"min":0.00,"max":1.00,"step":0.01}),
-                "dino_substeps": ("INT",{"default":4,"min":1,"max":9,"step":1}),
+                "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "fill_holes":("BOOLEAN",{"default":True}),
                 "hole_iterations": ("INT",{"default":1,"min":1,"max":9,"step":1}),
@@ -5594,6 +5670,7 @@ NODE_CLASS_MAPPINGS = {
     "Trellis2SparseGeneratorWithReconViaGen": Trellis2SparseGeneratorWithReconViaGen,
     "Trellis2ExtractImagesFromVideo": Trellis2ExtractImagesFromVideo,
     "Trellis2MaxTokensCalculator": Trellis2MaxTokensCalculator,
+    "Trellis2FillHolesNicelyWithMeshlib": Trellis2FillHolesNicelyWithMeshlib,
     }
     
 
@@ -5656,4 +5733,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Trellis2SparseGeneratorWithReconViaGen": "Trellis2 - Sparse Generator with ReconViaGen",
     "Trellis2ExtractImagesFromVideo": "Trellis2 - Extract Images from Video",
     "Trellis2MaxTokensCalculator": "Trellis2 - Max Tokens Calculator",
+    "Trellis2FillHolesNicelyWithMeshlib": "Trellis2 - Fill Holes Nicely With Meshlib",
     }

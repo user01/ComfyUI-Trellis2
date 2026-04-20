@@ -3169,13 +3169,16 @@ class Trellis2ImageTo3DPipeline(Pipeline):
             if num_tokens < max_num_tokens:
                 if hr_resolution != resolution:
                     print(f"Due to the limited number of tokens, the resolution is reduced to {hr_resolution}.")
+                print(f"Num tokens {num_tokens}")
                 break
             hr_resolution -= 128
             if hr_resolution < 1024 and resolution >= 1024:
                 hr_resolution = 1024
+                print(f"Num tokens {num_tokens}")
                 break
             if hr_resolution < 512:
                 hr_resolution = 512
+                print(f"Num tokens {num_tokens}")
                 break
         
         coords_dev = coords.to(self.device)                                           
