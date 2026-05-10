@@ -51,6 +51,101 @@ BASE_CACHE_DIR = Path(os.path.dirname(os.path.realpath(__file__))) / "triton_cac
 #os.environ["TRITON_ALWAYS_COMPILE"] = "1"
 #os.environ["TORCHINDUCTOR_FORCE_DISABLE_CACHES"]="1"
 
+PIXAL3D_IMAGE_COND_CONFIGS = {
+    "ss": {
+        "model_name": "facebook/dinov3-vitl16-pretrain-lvd1689m",
+        "image_size": 512,
+        "grid_resolution": 16,
+    },
+    "shape_512": {
+        "model_name": "facebook/dinov3-vitl16-pretrain-lvd1689m",
+        "image_size": 512,
+        "grid_resolution": 32,
+        "use_naf_upsample": True,
+        "naf_target_size": 512,
+    },
+    "shape_1024": {
+        "model_name": "facebook/dinov3-vitl16-pretrain-lvd1689m",
+        "image_size": 1024,
+        "grid_resolution": 64,
+        "use_naf_upsample": True,
+        "naf_target_size": 512,
+    },
+    "tex_1024": {
+        "model_name": "facebook/dinov3-vitl16-pretrain-lvd1689m",
+        "image_size": 1024,
+        "grid_resolution": 64,
+        "use_naf_upsample": True,
+        "naf_target_size": 1024,
+    },
+}
+
+def build_pixal3d_image_cond_model(config: dict):
+    from .trellis2.trainers.flow_matching.mixins.image_conditioned_proj import DinoV3ProjFeatureExtractor
+    model = DinoV3ProjFeatureExtractor(**config)
+    model.eval()
+    return model
+    
+def load_pixal3d_image_cond_ss(pipeline, config: dict):    
+    if hasattr(pipeline,'pixal3d_image_cond_ss') and pipeline.pixal3d_image_cond_ss is not None:
+        return pipeline.pixal3d_image_cond_ss
+    
+    print('Loading Pixal3D Image Cond SS Model ...')
+    model = build_pixal3d_image_cond_model(config)
+    pipeline.pixal3d_image_cond_ss = model
+    return model
+    
+def unload_pixal3d_image_cond_ss(pipeline):
+    if hasattr(pipeline,'pixal3d_image_cond_ss') and pipeline.pixal3d_image_cond_ss is not None:
+        del pipeline.pixal3d_image_cond_ss
+        pipeline.pixal3d_image_cond_ss = None
+        gc.collect()        
+        
+def load_pixal3d_image_cond_shape_512(pipeline, config: dict):    
+    if hasattr(pipeline,'pixal3d_image_cond_shape_512') and pipeline.pixal3d_image_cond_shape_512 is not None:
+        return pipeline.pixal3d_image_cond_shape_512
+    
+    print('Loading Pixal3D Image Cond Shape 512 Model ...')
+    model = build_pixal3d_image_cond_model(config)
+    pipeline.pixal3d_image_cond_shape_512 = model
+    return model
+    
+def unload_pixal3d_image_cond_shape_512(pipeline):
+    if hasattr(pipeline,'pixal3d_image_cond_shape_512') and pipeline.pixal3d_image_cond_shape_512 is not None:
+        del pipeline.pixal3d_image_cond_shape_512
+        pipeline.pixal3d_image_cond_shape_512 = None
+        gc.collect() 
+        
+def load_pixal3d_image_cond_shape_1024(pipeline, config: dict):    
+    if hasattr(pipeline,'pixal3d_image_cond_shape_1024') and pipeline.pixal3d_image_cond_shape_1024 is not None:
+        return pipeline.pixal3d_image_cond_shape_1024
+    
+    print('Loading Pixal3D Image Cond Shape 1024 Model ...')
+    model = build_pixal3d_image_cond_model(config)
+    pipeline.pixal3d_image_cond_shape_1024 = model
+    return model
+    
+def unload_pixal3d_image_cond_shape_1024(pipeline):
+    if hasattr(pipeline,'pixal3d_image_cond_shape_1024') and pipeline.pixal3d_image_cond_shape_1024 is not None:
+        del pipeline.pixal3d_image_cond_shape_1024
+        pipeline.pixal3d_image_cond_shape_1024 = None
+        gc.collect()
+
+def load_pixal3d_image_cond_tex_1024(pipeline, config: dict):    
+    if hasattr(pipeline,'pixal3d_image_cond_tex_1024') and pipeline.pixal3d_image_cond_tex_1024 is not None:
+        return pipeline.pixal3d_image_cond_tex_1024
+    
+    print('Loading Pixal3D Image Cond Tex 1024 Model ...')
+    model = build_pixal3d_image_cond_model(config)
+    pipeline.pixal3d_image_cond_tex_1024 = model
+    return model
+    
+def unload_pixal3d_image_cond_tex_1024(pipeline):
+    if hasattr(pipeline,'pixal3d_image_cond_tex_1024') and pipeline.pixal3d_image_cond_tex_1024 is not None:
+        del pipeline.pixal3d_image_cond_tex_1024
+        pipeline.pixal3d_image_cond_tex_1024 = None
+        gc.collect()           
+
 to_pil = transforms.ToPILImage()
 
 class AnyType(str):
@@ -325,7 +420,7 @@ class Trellis2LoadModel:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "modelname": (["microsoft/TRELLIS.2-4B","visualbruno/TRELLIS.2-4B-FP8"],{"default":"microsoft/TRELLIS.2-4B"}),
+                "modelname": (["microsoft/TRELLIS.2-4B","visualbruno/TRELLIS.2-4B-FP8","TencentARC/Pixal3D-T"],{"default":"microsoft/TRELLIS.2-4B"}),
                 "backend": (["flash_attn","xformers","sdpa","flash_attn_3"],{"default":"flash_attn"}),
                 "device": (["cpu","cuda"],{"default":"cuda"}),
                 "low_vram": ("BOOLEAN",{"default":True}),
@@ -379,6 +474,12 @@ class Trellis2LoadModel:
         if not os.path.exists(dinov3_model_path):
             raise Exception("Facebook Dinov3 model not found in models/facebook/dinov3-vitl16-pretrain-lvd1689m folder")
         
+        dinov3_model_path = os.path.join(folder_paths.models_dir,"facebook","dinov3-vitl16-pretrain-lvd1689m")
+        PIXAL3D_IMAGE_COND_CONFIGS["ss"]["model_name"] = dinov3_model_path
+        PIXAL3D_IMAGE_COND_CONFIGS["shape_512"]["model_name"] = dinov3_model_path
+        PIXAL3D_IMAGE_COND_CONFIGS["shape_1024"]["model_name"] = dinov3_model_path
+        PIXAL3D_IMAGE_COND_CONFIGS["tex_1024"]["model_name"] = dinov3_model_path
+        
         trellis_image_large_path = os.path.join(folder_paths.models_dir,"microsoft","TRELLIS-image-large","ckpts","ss_dec_conv3d_16l8_fp16.safetensors")
         if not os.path.exists(trellis_image_large_path):
             print('Trellis-Image-Large ss_dec_conv3d_16l8_fp16 files not found. Trying to download the files from huggingface ...')            
@@ -405,6 +506,9 @@ class Trellis2LoadModel:
                 print("Download ss_dec_conv3d_16l8_fp16.safetensors complete!")
             else:
                 raise Exception("Cannot download Trellis-Image-Large file ss_dec_conv3d_16l8_fp16.safetensors")
+        
+        if use_reconviagen and modelname == 'TencentARC/Pixal3D-T':
+            raise Exception('Model TencentARC/Pixal3D-T is not compatible with ReconViaGen')
         
         if use_reconviagen:
             reconviagen_file = os.path.join(folder_paths.models_dir,'microsoft','TRELLIS.2-4B','ckpts','ss_vggt_cond.safetensors')
@@ -477,8 +581,12 @@ class Trellis2LoadModel:
                 raise Exception("ReconViaGen cannot be used with TRELLIS.2-4B-FP8. Select microsoft/TRELLIS.2-4B")
         else:
             use_fp8 = False
-                
-        pipeline = Trellis2ImageTo3DPipeline.from_pretrained(model_path, keep_models_loaded = keep_models_loaded, use_fp8=use_fp8, use_reconviagen=use_reconviagen)
+        
+        isPixal3D = False
+        if modelname == "TencentARC/Pixal3D-T":
+            isPixal3D = True
+        
+        pipeline = Trellis2ImageTo3DPipeline.from_pretrained(model_path, keep_models_loaded = keep_models_loaded, use_fp8=use_fp8, use_reconviagen=use_reconviagen, isPixal3D = isPixal3D)
         pipeline.low_vram = low_vram
         
         if device=="cuda":
@@ -1044,6 +1152,7 @@ class Trellis2UnWrapAndRasterizer:
                 "use_custom_normals": ("BOOLEAN",{"default":False}),
                 "bvh": ("BVH",),
                 "inpainting": (["telea","ns"],{"default":"telea"}),
+                "reorient_vertices":(["None","90 degrees","-90 degrees"],{"default":"90 degrees"}),
             }
         }
 
@@ -1053,7 +1162,7 @@ class Trellis2UnWrapAndRasterizer:
     CATEGORY = "Trellis2Wrapper"
     OUTPUT_NODE = True
 
-    def process(self, mesh, mesh_cluster_threshold_cone_half_angle_rad, mesh_cluster_refine_iterations, mesh_cluster_global_iterations, mesh_cluster_smooth_strength, texture_size, texture_alpha_mode, double_side_material, bake_on_vertices,use_custom_normals,bvh,inpainting):
+    def process(self, mesh, mesh_cluster_threshold_cone_half_angle_rad, mesh_cluster_refine_iterations, mesh_cluster_global_iterations, mesh_cluster_smooth_strength, texture_size, texture_alpha_mode, double_side_material, bake_on_vertices,use_custom_normals,bvh,inpainting,reorient_vertices):
         mesh_copy = copy.deepcopy(mesh)
         
         aabb = [[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]
@@ -1158,8 +1267,12 @@ class Trellis2UnWrapAndRasterizer:
             normals_np = out_normals.cpu().numpy()
             
             # Swap Y and Z axes, invert Y (common conversion for GLB compatibility)
-            vertices_np[:, 1], vertices_np[:, 2] = vertices_np[:, 2].copy(), -vertices_np[:, 1].copy()
-            normals_np[:, 1], normals_np[:, 2] = normals_np[:, 2].copy(), -normals_np[:, 1].copy()
+            if reorient_vertices == '90 degrees':
+                vertices_np[:, 1], vertices_np[:, 2] = vertices_np[:, 2], -vertices_np[:, 1]
+                normals_np[:, 1], normals_np[:, 2] = normals_np[:, 2], -normals_np[:, 1]
+            elif reorient_vertices == '-90 degrees':
+                vertices_np[:, 1], vertices_np[:, 2] = -vertices_np[:, 2], vertices_np[:, 1]
+                normals_np[:, 1], normals_np[:, 2] = -normals_np[:, 2], normals_np[:, 1]
             
             # Create mesh with vertex colors using ColorVisuals
             if use_custom_normals:
@@ -1291,8 +1404,13 @@ class Trellis2UnWrapAndRasterizer:
         normals_np = out_normals.cpu().numpy()
         
         # Swap Y and Z axes, invert Y (common conversion for GLB compatibility)
-        vertices_np[:, 1], vertices_np[:, 2] = vertices_np[:, 2], -vertices_np[:, 1]
-        normals_np[:, 1], normals_np[:, 2] = normals_np[:, 2], -normals_np[:, 1]
+        if reorient_vertices == '90 degrees':
+            vertices_np[:, 1], vertices_np[:, 2] = vertices_np[:, 2], -vertices_np[:, 1]
+            normals_np[:, 1], normals_np[:, 2] = normals_np[:, 2], -normals_np[:, 1]
+        elif reorient_vertices == '-90 degrees':
+            vertices_np[:, 1], vertices_np[:, 2] = -vertices_np[:, 2], vertices_np[:, 1]
+            normals_np[:, 1], normals_np[:, 2] = -normals_np[:, 2], normals_np[:, 1]        
+            
         uvs_np[:, 1] = 1 - uvs_np[:, 1] # Flip UV V-coordinate
         
         if use_custom_normals:
@@ -3795,13 +3913,13 @@ class Trellis2ImageCondGenerator:
             },
         }
 
-    RETURN_TYPES = ("IMAGE_COND", "IMAGE_COND", "TRELLIS2PIPELINE",)
-    RETURN_NAMES = ("cond_512", "cond_1024", "pipeline",)
+    RETURN_TYPES = ("IMAGE_COND", "IMAGE_COND", "TRELLIS2PIPELINE", "MOGE_CAM_CONFIG")
+    RETURN_NAMES = ("cond_512", "cond_1024", "pipeline", "moge_camera_config")
     FUNCTION = "process"
     CATEGORY = "Trellis2Wrapper"
     OUTPUT_NODE = True
 
-    def process(self, pipeline, image, max_views,):   
+    def process(self, pipeline, image, max_views,):                                   
         images = tensor_batch_to_pil_list(image, max_views=max_views)
         image_in = images[0] if len(images) == 1 else images        
         
@@ -3810,15 +3928,54 @@ class Trellis2ImageCondGenerator:
         else:
             images = [image_in]
             
-        pipeline.load_image_cond_model()        
+        pipeline.load_image_cond_model()           
         
         cond_512  = pipeline.get_cond(images, 512, max_views = max_views)        
         cond_1024 = pipeline.get_cond(images, 1024, max_views = max_views)
         
+        if pipeline.isPixal3D:
+            MoGeModel = "Ruicheng/moge-2-vitl"
+            moge_model_path = os.path.join(folder_paths.models_dir, "Ruicheng","moge-2-vitl")
+            
+            if not os.path.exists(moge_model_path):
+                print(f"Downloading MoGe model to: {moge_model_path}")
+                from huggingface_hub import snapshot_download
+                snapshot_download(
+                    repo_id=MoGeModel,
+                    local_dir=moge_model_path,
+                    local_dir_use_symlinks=False,
+                )
+            
+            moge_model_path = os.path.join(moge_model_path,'model.pt')
+            
+            print('Loading MoGe model ...')
+            moge_model = self.load_moge_model(model_name = moge_model_path)
+            
+            from .trellis2.utils.camera import get_camera_params_wild_moge
+            
+            if isinstance(images, list):
+                image = images[0]
+            else:
+                image = images
+                
+            camera_config = get_camera_params_wild_moge(image, moge_model)
+            print(camera_config)
+            
+            del moge_model
+            moge_model = None            
+        else:
+            camera_config = None
+        
         if not pipeline.keep_models_loaded:
             pipeline.unload_image_cond_model()            
 
-        return (cond_512, cond_1024, pipeline,)        
+        return (cond_512, cond_1024, pipeline, camera_config)   
+
+    def load_moge_model(self, model_name, device='cuda'):
+        from .moge.model.v2 import MoGeModel
+        moge_model = MoGeModel.from_pretrained(model_name).to(device)
+        moge_model.eval()
+        return moge_model        
 
 class Trellis2SparseGenerator:
     @classmethod
@@ -3845,6 +4002,10 @@ class Trellis2SparseGenerator:
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
                 "keep_only_shell": ("BOOLEAN",{"default":True}),
             },
+            "optional":{
+                "image":("IMAGE",),
+                "moge_camera_config":("MOGE_CAM_CONFIG",)
+            }
         }
 
     RETURN_TYPES = ("COORDS", "INT", "TRELLIS2PIPELINE",)
@@ -3870,9 +4031,10 @@ class Trellis2SparseGenerator:
         dino_substeps,
         hole_fill_algorithm,
         dino_foundation_cap,
-        keep_only_shell
-        ):
-        
+        keep_only_shell,
+        image = None,
+        moge_camera_config = None
+        ):               
         self.seed_all(seed)
         
         sparse_structure_guidance_interval = [sparse_structure_guidance_interval_start,sparse_structure_guidance_interval_end]        
@@ -3881,7 +4043,32 @@ class Trellis2SparseGenerator:
         args = pipeline._pretrained_args
         sparse_sampler_prefix = pipeline.GetSamplerName(sparse_structure_sampler)
         pipeline.sparse_structure_sampler = getattr(samplers, f"Flow{sparse_sampler_prefix}GuidanceIntervalSampler")(**args['sparse_structure_sampler']['args'])
-        pipeline.load_sparse_structure_model()        
+        pipeline.load_sparse_structure_model()   
+
+        if pipeline.isPixal3D:
+            if image is not None:
+                images = tensor_batch_to_pil_list(image, max_views=16)                
+                images = list(images)
+            else:
+                raise Exception('Image is required for Pixal3D')
+                
+            if moge_camera_config is not None:
+                camera_angle_x = moge_camera_config['camera_angle_x']
+                distance = moge_camera_config['distance']
+                mesh_scale = moge_camera_config['mesh_scale']
+            else:
+                raise Exception('MoGe Camera Config is required for Pixal3D')
+
+            image_cond_model = load_pixal3d_image_cond_ss(pipeline, PIXAL3D_IMAGE_COND_CONFIGS["ss"])            
+        
+            image_cond = pipeline.get_proj_cond_ss(
+                image=images,
+                camera_angle_x=camera_angle_x,
+                distance=distance,
+                mesh_scale=mesh_scale,
+                image_cond_model=image_cond_model
+            )
+        
         coords = pipeline.sample_sparse_structure(
             image_cond, sparse_structure_resolution,
             1, sparse_structure_sampler_params,
@@ -3896,7 +4083,8 @@ class Trellis2SparseGenerator:
         )
         
         if not pipeline.keep_models_loaded:
-            pipeline.unload_sparse_structure_model()            
+            pipeline.unload_sparse_structure_model()
+            unload_pixal3d_image_cond_ss(pipeline)        
 
         return (coords, sparse_structure_resolution, pipeline,)
         
@@ -3931,6 +4119,11 @@ class Trellis2ShapeGenerator:
                 "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),                
             },
+            "optional":
+            {
+                "image": ("IMAGE",),
+                "moge_camera_config": ("MOGE_CAM_CONFIG",),
+            }    
         }
 
     RETURN_TYPES = ("SHAPE_SLAT", "INT", "TRELLIS2PIPELINE",)
@@ -3951,7 +4144,9 @@ class Trellis2ShapeGenerator:
         verbose,
         dino_lock,
         dino_substeps,
-        dino_foundation_cap
+        dino_foundation_cap,
+        image = None,
+        moge_camera_config = None
         ):
             
         shape_guidance_interval = [shape_guidance_interval_start, shape_guidance_interval_end]        
@@ -3963,7 +4158,30 @@ class Trellis2ShapeGenerator:
         
         if resolution == 512:
             pipeline.unload_shape_slat_flow_model_1024()
-            pipeline.load_shape_slat_flow_model_512()            
+            pipeline.load_shape_slat_flow_model_512()   
+            
+            if pipeline.isPixal3D:
+                images = tensor_batch_to_pil_list(image, max_views=16)
+                image_in = images[0] if len(images) == 1 else images        
+                
+                if isinstance(image_in, (list, tuple)):
+                    images = list(image_in)
+                else:
+                    images = [image_in]
+                    
+                camera_angle_x = moge_camera_config['camera_angle_x']
+                distance = moge_camera_config['distance']
+                mesh_scale = moge_camera_config['mesh_scale']
+                
+                image_cond_model = load_pixal3d_image_cond_shape_512(pipeline, PIXAL3D_IMAGE_COND_CONFIGS["shape_512"])
+                    
+                image_cond = pipeline.get_proj_cond_shape(
+                    image_cond_model, images, coords,
+                    camera_angle_x=camera_angle_x,
+                    distance=distance,
+                    mesh_scale=mesh_scale,
+                )
+            
             shape_slat = pipeline.sample_shape_slat(
                 image_cond, pipeline.models['shape_slat_flow_model_512'],
                 coords, shape_slat_sampler_params,
@@ -3975,9 +4193,34 @@ class Trellis2ShapeGenerator:
             
             if not pipeline.keep_models_loaded:
                 pipeline.unload_shape_slat_flow_model_512()
+                unload_pixal3d_image_cond_shape_512(pipeline)
+                
         elif resolution == 1024:
             pipeline.unload_shape_slat_flow_model_512()
             pipeline.load_shape_slat_flow_model_1024()
+            
+            if pipeline.isPixal3D:
+                images = tensor_batch_to_pil_list(image, max_views=16)
+                image_in = images[0] if len(images) == 1 else images        
+                
+                if isinstance(image_in, (list, tuple)):
+                    images = list(image_in)
+                else:
+                    images = [image_in]
+                    
+                camera_angle_x = moge_camera_config['camera_angle_x']
+                distance = moge_camera_config['distance']
+                mesh_scale = moge_camera_config['mesh_scale']
+                
+                image_cond_model = load_pixal3d_image_cond_shape_1024(pipeline,PIXAL3D_IMAGE_COND_CONFIGS["shape_1024"])               
+                    
+                image_cond = pipeline.get_proj_cond_shape(
+                    image_cond_model, images, coords,
+                    camera_angle_x=camera_angle_x,
+                    distance=distance,
+                    mesh_scale=mesh_scale,
+                )            
+            
             shape_slat = pipeline.sample_shape_slat(
                 image_cond, pipeline.models['shape_slat_flow_model_1024'],
                 coords, shape_slat_sampler_params,
@@ -3989,6 +4232,7 @@ class Trellis2ShapeGenerator:
             
             if not pipeline.keep_models_loaded:
                 pipeline.unload_shape_slat_flow_model_1024()
+                unload_pixal3d_image_cond_shape_1024(pipeline)
         
         return (shape_slat, resolution, pipeline,)      
 
@@ -4016,6 +4260,11 @@ class Trellis2ShapeCascadeGenerator:
                 "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
+            "optional":
+            {
+                "image": ("IMAGE",),
+                "moge_camera_config": ("MOGE_CAM_CONFIG",),
+            }              
         }
 
     RETURN_TYPES = ("SHAPE_SLAT","INT","TRELLIS2PIPELINE","INT",)
@@ -4036,7 +4285,9 @@ class Trellis2ShapeCascadeGenerator:
         verbose,
         dino_lock,
         dino_substeps,
-        dino_foundation_cap
+        dino_foundation_cap,
+        image = None,
+        moge_camera_config = None
         ):
             
         shape_guidance_interval = [shape_guidance_interval_start, shape_guidance_interval_end]        
@@ -4046,14 +4297,14 @@ class Trellis2ShapeCascadeGenerator:
         shape_sampler_prefix = pipeline.GetSamplerName(shape_sampler)
         pipeline.shape_slat_sampler = getattr(samplers, f"Flow{shape_sampler_prefix}GuidanceIntervalSampler")(**args['shape_slat_sampler']['args'])
         pipeline.load_shape_slat_flow_model_1024()           
-        slat, hr_resolution, num_tokens = self.sample(pipeline, shape_slat, from_resolution, to_resolution, sparse_structure_resolution, max_num_tokens, image_cond, shape_slat_sampler_params, pipeline.models['shape_slat_flow_model_1024'], verbose, dino_lock, dino_substeps, dino_foundation_cap)
+        slat, hr_resolution, num_tokens = self.sample(pipeline, shape_slat, from_resolution, to_resolution, sparse_structure_resolution, max_num_tokens, image_cond, shape_slat_sampler_params, pipeline.models['shape_slat_flow_model_1024'], verbose, dino_lock, dino_substeps, dino_foundation_cap, image, moge_camera_config)
         
         if not pipeline.keep_models_loaded:
             pipeline.unload_shape_slat_flow_model_1024()              
         
         return (slat, hr_resolution, pipeline, num_tokens,)         
         
-    def sample(self, pipeline, slat, lr_resolution, resolution, sparse_structure_resolution, max_num_tokens, cond, sampler_params, flow_model, verbose, dino_lock, dino_substeps, dino_foundation_cap):
+    def sample(self, pipeline, slat, lr_resolution, resolution, sparse_structure_resolution, max_num_tokens, cond, sampler_params, flow_model, verbose, dino_lock, dino_substeps, dino_foundation_cap, image, moge_camera_config):
         # Upsample       
         pipeline.load_shape_slat_decoder()
         if pipeline.low_vram:
@@ -4092,6 +4343,28 @@ class Trellis2ShapeCascadeGenerator:
                 hr_resolution = 512
                 break
                 
+        if pipeline.isPixal3D:
+            images = tensor_batch_to_pil_list(image, max_views=16)
+            image_in = images[0] if len(images) == 1 else images        
+            
+            if isinstance(image_in, (list, tuple)):
+                images = list(image_in)
+            else:
+                images = [image_in]
+                
+            camera_angle_x = moge_camera_config['camera_angle_x']
+            distance = moge_camera_config['distance']
+            mesh_scale = moge_camera_config['mesh_scale']
+            
+            image_cond_model = load_pixal3d_image_cond_shape_1024(pipeline, PIXAL3D_IMAGE_COND_CONFIGS["shape_1024"])
+                
+            cond = pipeline.get_proj_cond_shape(
+                image_cond_model, images, coords,
+                camera_angle_x=camera_angle_x,
+                distance=distance,
+                mesh_scale=mesh_scale,
+            )                
+                
         if pipeline.low_vram:
             cond = pipeline._cond_to(cond, pipeline.device)                
         
@@ -4127,6 +4400,7 @@ class Trellis2ShapeCascadeGenerator:
         if pipeline.low_vram:
             cond = pipeline._cond_cpu(cond)
             pipeline._cleanup_cuda()
+            unload_pixal3d_image_cond_shape_1024(pipeline)
 
         return slat, hr_resolution, num_tokens 
 
@@ -4151,6 +4425,11 @@ class Trellis2TexSlatGenerator:
                 "dino_substeps": ("INT",{"default":4,"min":1,"max":99,"step":1}),
                 "dino_foundation_cap": ("FLOAT",{"default":1.00,"min":0.01,"max":1.00,"step":0.01}),
             },
+            "optional":
+            {
+                "image": ("IMAGE",),
+                "moge_camera_config": ("MOGE_CAM_CONFIG",),
+            }            
         }
 
     RETURN_TYPES = ("TEXTURE_SLAT", "TRELLIS2PIPELINE",)
@@ -4171,15 +4450,21 @@ class Trellis2TexSlatGenerator:
         verbose,
         dino_lock,
         dino_substeps,
-        dino_foundation_cap
+        dino_foundation_cap,
+        image = None,
+        moge_camera_config = None
         ):
 
         texture_guidance_interval = [texture_guidance_interval_start,texture_guidance_interval_end]
         tex_slat_sampler_params = {"steps":texture_steps,"guidance_strength":texture_guidance_strength,"guidance_rescale":texture_guidance_rescale,"guidance_interval":texture_guidance_interval,"rescale_t":texture_rescale_t}
         
         if resolution == 512:
+            if pipeline.isPixal3D:
+                raise Exception('Pixal3D only works with 1024 resolution')
+                
             pipeline.unload_tex_slat_flow_model_1024()
-            pipeline.load_tex_slat_flow_model_512()
+            pipeline.load_tex_slat_flow_model_512()           
+            
             tex_slat = pipeline.sample_tex_slat_advanced(
                 image_cond, pipeline.models['tex_slat_flow_model_512'],
                 shape_slat, tex_slat_sampler_params, texture_sampler,
@@ -4192,8 +4477,36 @@ class Trellis2TexSlatGenerator:
                 pipeline.unload_tex_slat_flow_model_512()
                 
         elif resolution == 1024:
-            pipeline.unload_tex_slat_flow_model_512()
+            if not pipeline.isPixal3D:
+                pipeline.unload_tex_slat_flow_model_512()
+                
             pipeline.load_tex_slat_flow_model_1024()
+            
+            if pipeline.isPixal3D:
+                images = tensor_batch_to_pil_list(image, max_views=16)
+                image_in = images[0] if len(images) == 1 else images        
+                
+                if isinstance(image_in, (list, tuple)):
+                    images = list(image_in)
+                else:
+                    images = [image_in]
+                    
+                camera_angle_x = moge_camera_config['camera_angle_x']
+                distance = moge_camera_config['distance']
+                mesh_scale = moge_camera_config['mesh_scale']
+                
+                image_cond_model = load_pixal3d_image_cond_tex_1024(pipeline, PIXAL3D_IMAGE_COND_CONFIGS["tex_1024"])
+                
+                tex_grid_res = resolution // 16
+                
+                image_cond = pipeline.get_proj_cond_shape(
+                    image_cond_model, images, shape_slat.coords,
+                    camera_angle_x=camera_angle_x,
+                    distance=distance,
+                    mesh_scale=mesh_scale,
+                    grid_resolution_override=tex_grid_res,
+                )                       
+            
             tex_slat = pipeline.sample_tex_slat_advanced(
                 image_cond, pipeline.models['tex_slat_flow_model_1024'],
                 shape_slat, tex_slat_sampler_params, texture_sampler,
@@ -4365,7 +4678,7 @@ class Trellis2MultiViewTexturing:
                 "trimesh": ("TRIMESH",),
                 "texture_size": ("INT", {"default": 4096, "min": 512, "max": 8192}),
                 "blend_texture": ("BOOLEAN", {"default":True}),
-                "blend_exponent": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 8.0, "step": 0.5}),
+                "blend_exponent": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 99.0, "step": 0.1}),
                 "ortho_scale": ("FLOAT", {"default": 1.1, "min": 0.05, "max": 10.0, "step": 0.01}),
                 "norm_size": ("FLOAT",{"default":1.15, "min":0.0, "max":9.99, "step":0.01}),
                 "fill_holes": ("BOOLEAN",{"default":True}),
@@ -4373,6 +4686,7 @@ class Trellis2MultiViewTexturing:
                 "use_metallic": ("BOOLEAN",{"default":True}),
                 "depth_eps": ("FLOAT",{"default":0.0100,"min":0.0001,"max":1.0000,"step":0.0001}),
                 "mesh_cluster_threshold_cone_half_angle_rad": ("FLOAT",{"default":60,"min":1,"max":179,"step":1}),
+                "add_alpha_channel": ("BOOLEAN",{"default":False}),
             },
             "optional": {
                 # Standard views
@@ -4416,6 +4730,7 @@ class Trellis2MultiViewTexturing:
         use_metallic,
         depth_eps,
         mesh_cluster_threshold_cone_half_angle_rad,
+        add_alpha_channel,
         baseColorTexture = None,
         front_image=None,
         back_image=None,
@@ -4513,7 +4828,8 @@ class Trellis2MultiViewTexturing:
             norm_size=norm_size,
             max_hole_size=max_hole_size,
             use_metallic=use_metallic,
-            depth_eps=depth_eps
+            depth_eps=depth_eps,
+            add_alpha_channel=add_alpha_channel
         )
         
         return (trimesh_obj, pil2tensor(base_color), pil2tensor(mr))
@@ -4563,13 +4879,15 @@ class Trellis2ProjectHighPolyToLowPoly:
                 "low_poly_trimesh": ("TRIMESH",),
                 "texture_size": ("INT", {"default": 4096, "min": 512, "max": 8192}),
                 "blend_texture": ("BOOLEAN", {"default":True}),
-                "blend_exponent": ("FLOAT", {"default": 1.0, "min": 0.5, "max": 8.0, "step": 0.5}),
+                "blend_exponent": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 99.0, "step": 0.5}),
                 "ortho_scale": ("FLOAT", {"default": 1.1, "min": 0.05, "max": 10.0, "step": 0.01}),
                 "norm_size": ("FLOAT",{"default":1.15, "min":0.0, "max":9.99, "step":0.01}),
                 "fill_holes": ("BOOLEAN",{"default":True}),
                 "max_hole_size": ("INT",{"default":20,"min":0,"max":99999,"step":1}),
-                "use_metallic": ("BOOLEAN",{"default":True}),
+                "use_metallic": ("BOOLEAN",{"default":False}),
                 "depth_eps": ("FLOAT",{"default":0.0100,"min":0.0001,"max":1.0000,"step":0.0001}),
+                "mesh_cluster_threshold_cone_half_angle_rad": ("FLOAT",{"default":60,"min":1,"max":179,"step":1}),
+                "add_alpha_channel": ("BOOLEAN",{"default":False}),                
             },
             "optional": {
                 # Standard views
@@ -4613,6 +4931,8 @@ class Trellis2ProjectHighPolyToLowPoly:
         max_hole_size,
         use_metallic,
         depth_eps,
+        mesh_cluster_threshold_cone_half_angle_rad,
+        add_alpha_channel,
         baseColorTexture = None,
         front_image=None,
         back_image=None,
@@ -4702,6 +5022,7 @@ class Trellis2ProjectHighPolyToLowPoly:
             elevations,
             weights,
             texture_size=texture_size,
+            mesh_cluster_threshold_cone_half_angle_rad=mesh_cluster_threshold_cone_half_angle_rad,
             blend_exponent=blend_exponent,
             ortho_scale=ortho_scale,
             blend_texture=blend_texture,
@@ -4710,7 +5031,8 @@ class Trellis2ProjectHighPolyToLowPoly:
             max_hole_size=max_hole_size,
             use_metallic=use_metallic,
             depth_eps=depth_eps,
-            low_poly_mesh=low_poly_trimesh
+            low_poly_mesh=low_poly_trimesh,
+            add_alpha_channel=add_alpha_channel
         )
         
         return (trimesh_obj, pil2tensor(base_color), pil2tensor(mr))
@@ -6419,7 +6741,7 @@ class Trellis2TexSlatMultiViewGenerator:
                 conds[v] = pipeline._cond_cpu(conds[v])
             pipeline._cleanup_cuda()
             
-        return slat        
+        return slat
         
 NODE_CLASS_MAPPINGS = {
     "Trellis2LoadModel": Trellis2LoadModel,

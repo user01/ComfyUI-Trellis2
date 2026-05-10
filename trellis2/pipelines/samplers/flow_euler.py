@@ -76,7 +76,7 @@ class DinoLockMixin:
 
     def _dino_lock_step(self, model, x_t, t, t_prev, cond,
                          lock_strength, step_idx, total_steps,
-                         substeps=1, v_ema=None, ema_alpha=0.8, verbose=True, **kwargs):
+                         substeps=1, v_ema=None, ema_alpha=0.85, verbose=True, **kwargs):
         """
         One step with DINO lock + velocity EMA smoothing.
 
