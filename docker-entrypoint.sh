@@ -7,6 +7,10 @@ set -euo pipefail
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 # Persisted across runs via the mounted volume (NAF / torch.hub cache).
 export TORCH_HOME="${TORCH_HOME:-/opt/ComfyUI/models/.torch_hub}"
+# Persist nvdiffrast's runtime-JIT CUDA plugin so it isn't recompiled (~min)
+# every container recreate. On the mounted models volume.
+export TORCH_EXTENSIONS_DIR="${TORCH_EXTENSIONS_DIR:-/opt/ComfyUI/models/.torch_ext}"
+mkdir -p "$TORCH_EXTENSIONS_DIR"
 export HF_HOME="${HF_HOME:-/root/.cache/huggingface}"
 # nvdiffrast renders headless via EGL.
 export PYOPENGL_PLATFORM="${PYOPENGL_PLATFORM:-egl}"

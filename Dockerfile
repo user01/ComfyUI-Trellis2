@@ -59,14 +59,14 @@ RUN uv pip install --python $PYBIN --index-strategy unsafe-best-match \
 #    EXCLUDED on purpose:
 #    - nvdiffrec_render: only the projection Mesh Texturing node (Pixal3D-T
 #      forbids it, nodes.py:2314), never imported at load; drags tinycudann.
-#    - flex_gemm, o_voxel: the upstream Linux wheels are compiled for sm_120
-#      (Blackwell) ONLY — verified via cuobjdump. This box is an RTX 3090
-#      (sm_86); those kernels raise cudaErrorNoKernelImageForDevice. They are
-#      rebuilt from source for sm_86 in step 2b. cumesh (sm_86) + nvdiffrast
-#      (runtime JIT) from the bundled set are fine.
+#    - flex_gemm, o_voxel, nvdiffrast: the upstream Linux wheels are compiled
+#      for sm_120 (Blackwell) ONLY — verified via cuobjdump / runtime CUDA
+#      error 209. This box is an RTX 3090 (sm_86). flex_gemm + o_voxel are
+#      rebuilt from source for sm_86 in step 2b; nvdiffrast is replaced with
+#      official NVlabs upstream (step 2c) which JIT-compiles for sm_86 at
+#      first use. Only cumesh (genuinely sm_86) is kept from the bundled set.
 RUN uv pip install --python $PYBIN --no-deps \
         wheels/Linux/Torch291/cumesh-1.0-cp312-cp312-linux_x86_64.whl \
-        wheels/Linux/Torch291/nvdiffrast-0.4.0-cp312-cp312-linux_x86_64.whl \
         wheels/Linux/Torch291/custom_rasterizer-0.1-cp312-cp312-linux_x86_64.whl
 
 # 2b) Build flex_gemm + o_voxel from source for sm_86 (Ampere / RTX 3090).
@@ -85,6 +85,15 @@ RUN uv pip install --python $PYBIN setuptools wheel ninja pybind11 \
     && uv pip install --python $PYBIN --no-build-isolation --no-deps \
         "git+https://github.com/visualbruno/FlexGEMM@${FLEXGEMM_SHA}" \
         "o_voxel @ git+https://github.com/visualbruno/TRELLIS.2@${OVOXEL_SHA}#subdirectory=o-voxel"
+
+# 2c) Official NVlabs/nvdiffrast (the upstream of the bundled wheel; README's
+#     Custom Build list does NOT custom-fork it). v0.4.0, pinned. It JIT-builds
+#     its CUDA rasterizer plugin at first RasterizeCudaContext() using the
+#     container's nvcc + TORCH_CUDA_ARCH_LIST=8.6 (set above), so it targets
+#     sm_86 at runtime — unlike the sm_120-AOT bundled wheel (CUDA err 209).
+ARG NVDIFFRAST_SHA=253ac4fcea7de5f396371124af597e6cc957bfae
+RUN uv pip install --python $PYBIN --no-build-isolation --no-deps \
+        "git+https://github.com/NVlabs/nvdiffrast@${NVDIFFRAST_SHA}"
 
 # 3) Repo deps + UNDECLARED deps the package imports at module load but never
 #    lists (requirements.txt/pyproject omit them). Verified by import-graph scan:
