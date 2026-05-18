@@ -10,3 +10,6 @@ o-voxel/*
 nvdiffrast/*
 nvdiffrec/*
 fp8_models/*
+# Docker model volume (weights) and the HF-token env file — never commit these.
+/data/
+.env

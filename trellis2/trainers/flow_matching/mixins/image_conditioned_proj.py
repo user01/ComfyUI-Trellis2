@@ -459,7 +459,10 @@ class DinoV3ProjFeatureExtractor(nn.Module):
         hidden_states = self.model.embeddings(image, bool_masked_pos=None)
         position_embeddings = self.model.rope_embeddings(image)
 
-        for layer_module in self.model.layer:
+        # transformers >=5 nests the DINOv3 encoder under `.model`; older
+        # versions exposed `.layer` directly on the model. Support both.
+        encoder = self.model.model if hasattr(self.model, "model") else self.model
+        for layer_module in encoder.layer:
             hidden_states = layer_module(
                 hidden_states,
                 position_embeddings=position_embeddings,
@@ -870,7 +873,9 @@ class DinoV3VaeProjFeatureExtractor(nn.Module):
         image = image.to(self.dino_model.embeddings.patch_embeddings.weight.dtype)
         hidden_states = self.dino_model.embeddings(image, bool_masked_pos=None)
         position_embeddings = self.dino_model.rope_embeddings(image)
-        for layer_module in self.dino_model.layer:
+        # transformers >=5 nests the DINOv3 encoder under `.model`.
+        _enc = self.dino_model.model if hasattr(self.dino_model, "model") else self.dino_model
+        for layer_module in _enc.layer:
             hidden_states = layer_module(
                 hidden_states,
                 position_embeddings=position_embeddings,
