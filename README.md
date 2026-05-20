@@ -33,13 +33,25 @@ volume — already-present model sets are skipped via per-repo
 
 **Required in `.env`:**
 
-- `HF_TOKEN` — a Hugging Face access token with at least **read** scope.
-  DinoV3 is a **gated** model, so you must first accept its license at
-  <https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m> using
-  the same HF account that owns the token. Without that the fetch fails
-  fast with a clear "HF_TOKEN is not set and DinoV3 is missing" message.
-- `TRELLIS_API_KEY` — bearer used at run time by the API. Not used by
-  `fetch-models`; you can set it later.
+- `HF_TOKEN` — Hugging Face token used **only by `fetch-models`**, to pull
+  the gated DinoV3 weights. Three steps:
+  1. Open <https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m>
+     while signed in and click **Agree and access repository** — DinoV3 is
+     a *gated* model, this grants your HF account read access to it.
+  2. Generate a token at <https://huggingface.co/settings/tokens> with the
+     default **Read** preset (no extra scopes needed).
+  3. Put it in `.env` as `HF_TOKEN=hf_...`.
+
+  Without it, `fetch-models` exits fast with `HF_TOKEN is not set and
+  DinoV3 is missing`. The token is never baked into the image — Compose
+  injects it only into the one-off `model-fetch` container at fetch time.
+
+- `TRELLIS_API_KEY` — **the API access key**. Every request to the hosted
+  API must carry it as `Authorization: Bearer $TRELLIS_API_KEY` (every
+  endpoint except `/healthz`). Generate any long random string and put it
+  in `.env`, e.g. `TRELLIS_API_KEY=$(openssl rand -hex 32)`. Run-time only;
+  not used by `fetch-models`, so you can set it later. Also never baked —
+  Compose injects it from `.env` into the running container.
 
 **Fetches** (~26 GB total):
 
@@ -49,6 +61,13 @@ volume — already-present model sets are skipped via per-repo
 | `TencentARC/Pixal3D-T` | ~23 GB | no |
 | `Ruicheng/moge-2-vitl` | ~1.3 GB | no |
 | `microsoft/TRELLIS-image-large` (the two `ss_dec` files only) | ~140 MB | no |
+
+**Where they land:** each set goes under `./data/models/<org>/<repo>/` on
+the host (e.g. `./data/models/facebook/dinov3-vitl16-pretrain-lvd1689m/`).
+That directory is bind-mounted into the container as `/opt/ComfyUI/models`,
+which is what ComfyUI reads via `folder_paths.models_dir`. The NAF runtime
+cache lives at `./data/models/.torch_hub/` next to it. Weights persist
+across container rebuilds — the image itself stays weight-free.
 
 One extra model — `valeoai/NAF` — auto-downloads via `torch.hub` at the
 **first Pixal3D-T generation**, not during `fetch-models`. It is cached in
