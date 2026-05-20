@@ -25,7 +25,7 @@ services:
       - "8487:8000"               # hosted Pixal3D-T API (bearer-token; public)
       - "127.0.0.1:8488:8188"     # ComfyUI UI: loopback only — no auth on it;
                                   # SSH-tunnel from a workstation if needed:
-                                  #   ssh -L 8488:127.0.0.1:8488 erik@<box>
+                                  #   ssh -L 8488:127.0.0.1:8488 <user>@<box>
     gpus: all
     environment:
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True

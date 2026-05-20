@@ -1,7 +1,8 @@
-# Self-contained image: ComfyUI + ComfyUI-Trellis2 + a uv-managed venv, pinned
-# for the Pixal3D-T path on an Ampere GPU (RTX 3090, CC 8.6).
+# Self-contained image: ComfyUI + ComfyUI-Trellis2 + a uv-managed venv,
+# pinned for the Pixal3D-T path. GPU arch via the CUDA_ARCH build arg
+# (default 8.6 = Ampere; 12.0 for Blackwell).
 #
-# Pin rationale (see /home/erik/.claude/plans/review-this-implementation-i-m-hazy-breeze.md):
+# Pin rationale:
 #   torch 2.9.1+cu128 / cp312  -> only bundled-wheel torch line with a prebuilt natten >=0.21.5
 #   natten 0.21.5+torch290cu128 (whl.natten.org) -> NAF/Pixal3D needs natten; no source build
 #   devel base                 -> keeps a natten source-build escape hatch (not expected)
