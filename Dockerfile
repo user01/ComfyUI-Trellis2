@@ -54,46 +54,58 @@ RUN uv pip install --python $PYBIN --index-strategy unsafe-best-match \
         --extra-index-url https://download.pytorch.org/whl/cu128 \
         torch==2.9.1 torchvision==0.24.1 torchaudio==2.9.1
 
-# 2) Bundled Linux cp312 / torch2.9.1 compiled extensions, --no-deps so their
-#    loose "torch>=2.4" metadata cannot move the pinned torch.
-#    EXCLUDED on purpose:
-#    - nvdiffrec_render: only the projection Mesh Texturing node (Pixal3D-T
-#      forbids it, nodes.py:2314), never imported at load; drags tinycudann.
-#    - flex_gemm, o_voxel, nvdiffrast: the upstream Linux wheels are compiled
-#      for sm_120 (Blackwell) ONLY — verified via cuobjdump / runtime CUDA
-#      error 209. This box is an RTX 3090 (sm_86). flex_gemm + o_voxel are
-#      rebuilt from source for sm_86 in step 2b; nvdiffrast is replaced with
-#      official NVlabs upstream (step 2c) which JIT-compiles for sm_86 at
-#      first use. Only cumesh (genuinely sm_86) is kept from the bundled set.
-RUN uv pip install --python $PYBIN --no-deps \
-        wheels/Linux/Torch291/cumesh-1.0-cp312-cp312-linux_x86_64.whl \
-        wheels/Linux/Torch291/custom_rasterizer-0.1-cp312-cp312-linux_x86_64.whl
-
-# 2b) Build flex_gemm + o_voxel from source for sm_86 (Ampere / RTX 3090).
-#     nodes.py hard-imports flex_gemm.ops.grid_sample.grid_sample_3d and uses
-#     o_voxel CUDA mesh ops regardless of sparse-conv backend, so both must
-#     have sm_86 kernels. Built against the already-installed torch 2.9.1+cu128
-#     (devel base provides nvcc 12.8). --no-build-isolation so they compile
-#     against that exact torch; --no-deps so they cannot drag a different one.
-# Pinned to specific commits (authorized by the operator) for auditability /
-# reproducibility — these are the upstream author's own repos that this repo's
-# README "Custom Build" section documents as the official build sources.
+# ── GPU architecture knob ────────────────────────────────────────────────────
+# Build per target GPU:  --build-arg CUDA_ARCH=8.6   (Ampere, RTX 3090; default)
+#                        --build-arg CUDA_ARCH=12.0  (Blackwell, RTX PRO 6000)
+# Drives TORCH_CUDA_ARCH_LIST for every source/JIT-built CUDA extension below.
+ARG CUDA_ARCH=8.6
+ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCH}" MAX_JOBS="4"
+# Pinned upstream source commits (operator-authorized; the repo's README
+# "Custom Build" section documents these as the official build sources).
 ARG FLEXGEMM_SHA=db388bd17c34abc697792aa718dca780734c2783
 ARG OVOXEL_SHA=65d1e13b4a92296036044df0633242bb9e95abf6
-ENV TORCH_CUDA_ARCH_LIST="8.6" MAX_JOBS="4"
-RUN uv pip install --python $PYBIN setuptools wheel ninja pybind11 \
-    && uv pip install --python $PYBIN --no-build-isolation --no-deps \
-        "git+https://github.com/visualbruno/FlexGEMM@${FLEXGEMM_SHA}" \
-        "o_voxel @ git+https://github.com/visualbruno/TRELLIS.2@${OVOXEL_SHA}#subdirectory=o-voxel"
-
-# 2c) Official NVlabs/nvdiffrast (the upstream of the bundled wheel; README's
-#     Custom Build list does NOT custom-fork it). v0.4.0, pinned. It JIT-builds
-#     its CUDA rasterizer plugin at first RasterizeCudaContext() using the
-#     container's nvcc + TORCH_CUDA_ARCH_LIST=8.6 (set above), so it targets
-#     sm_86 at runtime — unlike the sm_120-AOT bundled wheel (CUDA err 209).
 ARG NVDIFFRAST_SHA=253ac4fcea7de5f396371124af597e6cc957bfae
-RUN uv pip install --python $PYBIN --no-build-isolation --no-deps \
-        "git+https://github.com/NVlabs/nvdiffrast@${NVDIFFRAST_SHA}"
+ARG CUMESH_SHA=d10e54c30ddd03d11472c1431693f985501c7966
+
+# 2) custom_rasterizer: bundled wheel, --no-deps. Unused by Pixal3D-T (never
+#    imported in the repo) but harmless; kept for parity. nvdiffrec_render is
+#    excluded on purpose (projection Mesh Texturing only — Pixal3D-T forbids
+#    it, nodes.py:2314 — and it drags the build-hell tinycudann).
+RUN uv pip install --python $PYBIN --no-deps \
+        wheels/Linux/Torch291/custom_rasterizer-0.1-cp312-cp312-linux_x86_64.whl
+
+# 2b) GPU-arch extensions, all targeting ${CUDA_ARCH}. The bundled Linux
+#     flex_gemm / o_voxel / nvdiffrast wheels are sm_120 (Blackwell) ONLY
+#     (verified via cuobjdump / runtime CUDA err 209), so they are rebuilt
+#     from the upstream-author / NVlabs sources for the chosen arch:
+#       flex_gemm  - nodes.py hard-imports flex_gemm.ops.grid_sample
+#       o_voxel    - CUDA mesh ops used by the pipeline
+#       nvdiffrast - official NVlabs v0.4.0; JIT-builds its rasterizer plugin
+#                    at first use against TORCH_CUDA_ARCH_LIST
+#     cumesh: the bundled wheel is genuinely sm_86 — kept as-is for the
+#     default (verified) 8.6 build; source-built from pinned CuMesh otherwise.
+#     Built --no-build-isolation (against the installed torch 2.9.1+cu128,
+#     devel base = nvcc 12.8) and --no-deps (no torch drift).
+# NB: each source package is installed in its OWN `uv pip install` call so
+# they build strictly sequentially. Passing multiple specs to one call lets
+# uv build them in parallel (uv is parallel-first), which combined with
+# per-package MAX_JOBS=4 spawns ~12 concurrent g++/nvcc processes compiling
+# CUDA template code — gcc OOMs / segfaults. Sequential keeps the resource
+# budget bounded; build16 (working) used this same pattern.
+RUN uv pip install --python $PYBIN setuptools wheel ninja pybind11 \
+ && uv pip install --python $PYBIN --no-build-isolation --no-deps \
+        "git+https://github.com/visualbruno/FlexGEMM@${FLEXGEMM_SHA}" \
+ && uv pip install --python $PYBIN --no-build-isolation --no-deps \
+        "o_voxel @ git+https://github.com/visualbruno/TRELLIS.2@${OVOXEL_SHA}#subdirectory=o-voxel" \
+ && uv pip install --python $PYBIN --no-build-isolation --no-deps \
+        "git+https://github.com/NVlabs/nvdiffrast@${NVDIFFRAST_SHA}" \
+ && if [ "${CUDA_ARCH}" = "8.6" ]; then \
+        uv pip install --python $PYBIN --no-deps \
+            wheels/Linux/Torch291/cumesh-1.0-cp312-cp312-linux_x86_64.whl ; \
+    else \
+        uv pip install --python $PYBIN --no-build-isolation --no-deps \
+            "cumesh @ git+https://github.com/visualbruno/CuMesh@${CUMESH_SHA}" ; \
+    fi
 
 # 3) Repo deps + UNDECLARED deps the package imports at module load but never
 #    lists (requirements.txt/pyproject omit them). Verified by import-graph scan:

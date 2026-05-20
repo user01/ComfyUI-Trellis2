@@ -39,10 +39,16 @@ COMFY_URL = os.environ.get("COMFY_URL", "http://127.0.0.1:8188").rstrip("/")
 OUTPUT_DIR = Path(os.environ.get("COMFY_OUTPUT_DIR", "/opt/ComfyUI/output"))
 DINOV3 = Path("/opt/ComfyUI/models/facebook/"
               "dinov3-vitl16-pretrain-lvd1689m/model.safetensors")
-TEMPLATE_PATH = Path(os.environ.get(
-    "WORKFLOW_TEMPLATE",
-    "/opt/ComfyUI/custom_nodes/ComfyUI-Trellis2/api/workflows/"
-    "pixal3d_textured.api.json"))
+_WF = Path("/opt/ComfyUI/custom_nodes/ComfyUI-Trellis2/api/workflows")
+# Two baked workflows: "textured" (full, ~24 min) and "mesh" (geometry only,
+# much faster). Client picks via the `mode` form field; default textured.
+TEMPLATES = {
+    "textured": Path(os.environ.get("WORKFLOW_TEMPLATE",
+                                    _WF / "pixal3d_textured.api.json")),
+    "mesh": Path(os.environ.get("WORKFLOW_TEMPLATE_MESH",
+                                _WF / "pixal3d_mesh.api.json")),
+}
+DEFAULT_MODE = "textured"
 API_KEY = os.environ.get("TRELLIS_API_KEY", "")
 JOB_TIMEOUT_S = int(os.environ.get("JOB_TIMEOUT_S", "2400"))  # 40 min
 
@@ -91,21 +97,20 @@ def _sole_input_name(obj_info: dict, cls: str) -> str:
     raise RuntimeError(f"{cls}: has no inputs")
 
 
-async def _ensure_loaded() -> None:
-    """Lazily resolve the template + ComfyUI input names, and cache them.
+async def _ensure_loaded(mode: str) -> None:
+    """Lazily resolve a mode's template + ComfyUI input names, and cache it.
 
-    Deliberately NOT a startup hook: if the operator hasn't exported the
-    workflow template yet, the API must still come up (degraded) and report
-    the problem via /healthz instead of crash-looping. Self-heals: the first
-    call after the template is placed loads it.
+    Deliberately NOT a startup hook: if a template is missing the API must
+    still come up (degraded) and report it via /healthz instead of
+    crash-looping. Self-heals: the first call after the file appears loads it.
     """
-    if "template" in _state:
+    if mode in _state:
         return
-    if not TEMPLATE_PATH.exists():
+    path = TEMPLATES[mode]
+    if not path.exists():
         raise HTTPException(503,
-            f"workflow template not found at {TEMPLATE_PATH} — export it from "
-            f"the ComfyUI UI (Workflow -> Export (API)) and place it there")
-    template = json.loads(TEMPLATE_PATH.read_text())
+            f"workflow template for mode '{mode}' not found at {path}")
+    template = json.loads(path.read_text())
     try:
         async with httpx.AsyncClient(timeout=30) as c:
             oi = (await c.get(f"{COMFY_URL}/object_info")).json()
@@ -119,10 +124,11 @@ async def _ensure_loaded() -> None:
     def node_id(cls: str) -> str:
         ids = [k for k, v in template.items() if v.get("class_type") == cls]
         if not ids:
-            raise HTTPException(503, f"template has no {cls} node")
+            raise HTTPException(503,
+                                f"'{mode}' template has no {cls} node")
         return ids[0]
 
-    _state.update(
+    _state[mode] = dict(
         template=template,
         img_node=node_id(CLS_IMAGE), img_in=img_in,
         model_node=node_id(CLS_MODEL), backend_in=backend_in,
@@ -132,34 +138,36 @@ async def _ensure_loaded() -> None:
 
 @app.get("/healthz")
 async def healthz() -> JSONResponse:
-    ok = {"template_present": TEMPLATE_PATH.exists(),
-          "dinov3": DINOV3.exists(),
-          "template_loaded": "template" in _state}
+    ok = {"dinov3": DINOV3.exists(),
+          "templates_present": {m: p.exists() for m, p in TEMPLATES.items()},
+          "templates_loaded": sorted(_state.keys())}
     try:
         async with httpx.AsyncClient(timeout=5) as c:
             ok["comfyui"] = (await c.get(f"{COMFY_URL}/system_stats")
                              ).status_code == 200
     except Exception:
         ok["comfyui"] = False
-    if ok["template_present"] and not ok["template_loaded"] and ok["comfyui"]:
-        try:                       # opportunistically load now
-            await _ensure_loaded()
-            ok["template_loaded"] = True
-        except Exception:          # noqa: BLE001
-            pass
-    # Ready = can actually serve. template_present is enough; it loads lazily.
+    if ok["comfyui"]:
+        for m in TEMPLATES:        # opportunistically warm any present mode
+            try:
+                await _ensure_loaded(m)
+            except Exception:      # noqa: BLE001
+                pass
+        ok["templates_loaded"] = sorted(_state.keys())
+    # Ready = ComfyUI up, DinoV3 present, and the default mode is servable.
     code = 200 if (ok["comfyui"] and ok["dinov3"]
-                   and ok["template_present"]) else 503
+                   and ok["templates_present"].get(DEFAULT_MODE)) else 503
     return JSONResponse(ok, status_code=code)
 
 
-def _build_prompt(image_name: str, basename: str,
+def _build_prompt(mode: str, image_name: str, basename: str,
                   seed: Optional[int]) -> dict:
-    g = copy.deepcopy(_state["template"])
-    g[_state["img_node"]]["inputs"][_state["img_in"]] = image_name
+    st = _state[mode]
+    g = copy.deepcopy(st["template"])
+    g[st["img_node"]]["inputs"][st["img_in"]] = image_name
     # flash_attn/xformers are not installed; sdpa is the supported path.
-    g[_state["model_node"]]["inputs"][_state["backend_in"]] = "sdpa"
-    g[_state["export_node"]]["inputs"][_state["export_name_in"]] = basename
+    g[st["model_node"]]["inputs"][st["backend_in"]] = "sdpa"
+    g[st["export_node"]]["inputs"][st["export_name_in"]] = basename
     # API clients send arbitrary photos (often RGB/JPEG). The preprocess node
     # otherwise assumes a pre-masked RGBA input and crashes on the missing
     # alpha channel; force rembg background removal so any image works.
@@ -205,8 +213,12 @@ async def _run_job(job_id: str, prompt_id: str, basename: str) -> None:
 
 @app.post("/v1/generate", status_code=202, dependencies=[Depends(_auth)])
 async def generate(image: UploadFile = File(...),
-                   seed: Optional[int] = Form(None)) -> dict:
-    await _ensure_loaded()  # 503 with an actionable message if not ready
+                   seed: Optional[int] = Form(None),
+                   mode: str = Form(DEFAULT_MODE)) -> dict:
+    if mode not in TEMPLATES:
+        raise HTTPException(422,
+            f"mode must be one of {sorted(TEMPLATES)} (got '{mode}')")
+    await _ensure_loaded(mode)  # 503 with an actionable message if not ready
     data = await image.read()
     job_id = uuid.uuid4().hex
     basename = f"api_{job_id}"
@@ -220,7 +232,7 @@ async def generate(image: UploadFile = File(...),
         ref = uploaded["name"]
         if uploaded.get("subfolder"):
             ref = f"{uploaded['subfolder']}/{uploaded['name']}"
-        prompt = _build_prompt(ref, basename, seed)
+        prompt = _build_prompt(mode, ref, basename, seed)
         r = await c.post(f"{COMFY_URL}/prompt",
                          json={"prompt": prompt, "client_id": job_id})
         if r.status_code != 200:

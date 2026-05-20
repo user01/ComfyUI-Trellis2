@@ -37,8 +37,35 @@ submits it to ComfyUI, and serves the resulting `.glb`. See the repo root /
 the plan for the endpoint contract (`POST /v1/generate`, `GET /v1/jobs/{id}`,
 `GET /v1/jobs/{id}/model`, bearer auth via `TRELLIS_API_KEY`).
 
-Default template: `pixal3d_textured.api.json` (override with
-`WORKFLOW_TEMPLATE`). `pixal3d_mesh.api.json` is the geometry-only variant.
+**Modes** — `POST /v1/generate` takes a `mode` form field:
+- `mode=textured` (default) — full textured GLB; ~24 min on a 3090.
+- `mode=mesh` — geometry only (`pixal3d_mesh.api.json`); much faster.
+
+```
+curl -s -X POST http://<box>:8000/v1/generate \
+  -H "Authorization: Bearer $TRELLIS_API_KEY" \
+  -F image=@photo.jpg -F mode=mesh
+```
+
+`/healthz` reports both templates' presence and which modes are loaded.
+Overridable paths: `WORKFLOW_TEMPLATE` (textured), `WORKFLOW_TEMPLATE_MESH`.
+
+## Building for a different GPU architecture
+
+The CUDA extensions (`flex_gemm`, `o_voxel`, `nvdiffrast`, and `cumesh` for
+non-Ampere) are compiled for one GPU arch per image, set by the `CUDA_ARCH`
+build arg (default `8.6` = Ampere / RTX 3090, the verified configuration):
+
+```
+# Blackwell (RTX PRO 6000 / RTX 50xx, sm_120):
+CUDA_ARCH=12.0 docker compose build
+```
+
+`blackwell_fix.patch_all()` is wired into the node import and self-activates
+only on Blackwell (no-op on sm_86), so the same code runs on both. Note: a
+Blackwell build compiles but is **not yet end-to-end verified** here (no
+sm_120 hardware on hand); also confirm the `whl.natten.org` natten wheel
+covers sm_120 for that build.
 
 ## Regenerating the API templates
 
