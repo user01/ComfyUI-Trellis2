@@ -1,0 +1,23 @@
+# Keep the build context small. The image only needs the cp312 / torch2.9.1
+# Linux wheel set (wheels/Linux/Torch291); everything else is excluded.
+.git
+.gitignore
+# Host model/weight volume + secrets — must never enter the build context/image.
+data
+.env
+wheels/Windows
+wheels/Linux/Torch270
+wheels/Linux/Torch2110
+**/__pycache__
+*.pyc
+triton_cache
+triton_caches
+fp8_models
+weights
+o_voxel
+Cumesh
+FlexGEMM
+nvdiffrast
+nvdiffrec
+*.md
+!README.md

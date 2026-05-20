@@ -1,0 +1,61 @@
+# Provision weights (once per machine / fresh volume; re-runnable, idempotent):
+#   1. Accept the DinoV3 license:
+#      https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m
+#   2. cp .env.example .env  and put your HF_TOKEN in it  (.env is gitignored)
+#   3. docker compose --profile setup run --rm model-fetch
+# Build:  docker compose build
+# Run:    docker compose up -d        UI: http://<host>:8188
+#
+# The image is weight-free and reproducible; weights live on the host bind-mount
+# ./data/models and persist across rebuilds. The HF token is only ever passed at
+# fetch time via .env — it never enters an image layer.
+
+services:
+  comfyui-trellis2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # GPU arch to compile the CUDA extensions for. Default 8.6 (Ampere,
+        # RTX 3090 — verified). Blackwell / RTX PRO 6000:
+        #   CUDA_ARCH=12.0 docker compose build
+        CUDA_ARCH: ${CUDA_ARCH:-8.6}
+    image: comfyui-trellis2:pixal3d-t
+    ports:
+      - "8487:8000"               # hosted Pixal3D-T API (bearer-token; public)
+      - "127.0.0.1:8488:8188"     # ComfyUI UI: loopback only — no auth on it;
+                                  # SSH-tunnel from a workstation if needed:
+                                  #   ssh -L 8488:127.0.0.1:8488 <user>@<box>
+    gpus: all
+    environment:
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - TORCH_HOME=/opt/ComfyUI/models/.torch_hub
+      - PYOPENGL_PLATFORM=egl
+      # MODE=api (default): ComfyUI in background + hosted API on :8000.
+      # MODE=comfyui: ComfyUI only on :8188 (UI/dev).
+      - MODE=${MODE:-api}
+      # Required for API auth. Set in .env (gitignored); never baked.
+      - TRELLIS_API_KEY=${TRELLIS_API_KEY:-}
+      # Per-job wall-clock cap (s). Textured Pixal3D-T first-run is long.
+      - JOB_TIMEOUT_S=${JOB_TIMEOUT_S:-5400}
+      # Set to 1 to pre-fetch valeoai/NAF (and surface any natten error) at
+      # startup instead of on the first generation.
+      - PREWARM_NAF=0
+    volumes:
+      - ./data/models:/opt/ComfyUI/models
+      - ./data/input:/opt/ComfyUI/input
+      - ./data/output:/opt/ComfyUI/output
+      - ./data/hf_cache:/root/.cache/huggingface
+    restart: unless-stopped
+
+  # One-off weight provisioner. Only runs with `--profile setup`, never on `up`.
+  # Reuses the built image; populates ./data/models idempotently.
+  model-fetch:
+    image: comfyui-trellis2:pixal3d-t
+    profiles: ["setup"]
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+    volumes:
+      - ./data/models:/opt/ComfyUI/models
+      - ./data/hf_cache:/root/.cache/huggingface
+    entrypoint: ["/opt/ComfyUI/custom_nodes/ComfyUI-Trellis2/scripts/fetch_models.sh"]

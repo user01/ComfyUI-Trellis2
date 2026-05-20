@@ -1,177 +1,143 @@
-# 🌀 ComfyUI Wrapper for [https://github.com/microsoft/TRELLIS.2](https://github.com/microsoft/TRELLIS.2)
+# 🌀 ComfyUI-Trellis2 — Docker fork for Pixal3D-T
+
+A self-contained Linux Docker build of
+[visualbruno/ComfyUI-Trellis2](https://github.com/visualbruno/ComfyUI-Trellis2)
+(wrapping [Microsoft/TRELLIS.2](https://github.com/microsoft/TRELLIS.2))
+that runs the **`TencentARC/Pixal3D-T`** image → 3D pipeline behind a thin
+async HTTP API. Image goes in, `.glb` comes out.
+
+Verified end-to-end on **RTX 3090 (Ampere, sm_86)**; the GPU architecture
+is a single build arg (`CUDA_ARCH`) for retargeting (e.g. Blackwell sm_120).
+
+For the original node code, example workflows, model behaviour, and the
+upstream build sources see the parent repo above.
 
 ---
 
-<img width="883" height="566" alt="{09272892-57D6-4EB8-B27B-6B875916982A}" src="https://github.com/user-attachments/assets/a7788f13-141c-4072-9143-b8b1ee1ead2a" />
+## Quickstart
 
----
-
-<img width="980" height="579" alt="{F6FE6B7B-94B7-44C6-8C89-02E7C81EBF7E}" src="https://github.com/user-attachments/assets/ad27111c-beb8-48ef-8613-c533a3a5cacd" />
-
----
-
-## 📋 Changelog
-
-| Date | Description |
-| --- | --- |
-| **2026-05-13** | Added support for Pixal3D-T model<br>It's not compatible with all nodes<br>Check in the folder example_workflows |
-| **2026-04-20** | Recreated all Workflows |
-| **2026-04-20** | Added node "Sparse MultiView Generator"<br>Added node "ImageCond MultiView Generator"<br>Added node "Shape MultiView Generator"<br>Added node "Shape Cascade MultiView Generator"<br>Added node "Tex Slat MultiView Generator" |
-| **2026-04-20** | Added node "Fill Holes Nicely with Meshlib"<br>Fixed DinoV3 Features Extractor |
-| **2026-04-06** | Added new "DINO-Lock" functionality<br>New fill_holes in Sparse Generator<br>Thanks to Easymode on Discord |
-| **2026-04-05** | Added node "Extract Images from Video"<br>Can be used with "Sparse Generator with ReconViaGen" |
-| **2026-04-04** | Added node "Sparse Generator with ReconViaGen" |
-| **2026-04-01** | Added node "Voxel to Mesh"<br>It replaces Remeshing to make watertight mesh |
-| **2026-03-21** | Added node "Projection HighPoly to LowPoly"<br>Added node "Render MultiView" |
-| **2026-03-17** | Added Inpainting Choice NS and TELEA |
-| **2026-03-14** | Added Experimental node "Projection MultiView Texturing"<br>Check in example_workflows folder |
-| **2026-03-08** | Updated CuMesh wheels for Torch 2.7, 2.8 and Linux<br>You can use the node "Fill Holes with Cumesh" |
-| **2026-03-07** | Added "Heun" sampler<br>Added the node "Mesh with Voxel Cascade Generator" |
-| **2026-03-05** | Added "RK4" and "RK5" samplers<br>Processing is much slower, so reduce the number of steps |
-| **2026-03-04** | Sparse Structure Resolution supported up to 128<br>Experimental for "cascade" pipelines only<br>Can increase the details |
-| **2026-02-27** | Added the Wheels for Windows Python 3.13, Torch 2.10.0, CUDA 13.1 |
-| **2026-02-26** | Added FP8 models<br>Added "sdpa" and "flash_attn_3" for the backend |
-| **2026-02-21** | Fixed "Vertical lines" bug |
-| **2026-02-17** | Disabled Triton Cache (trying to fix vertical lines bug)<br>Fixed "Weld Vertices"<br>Added "Reconstruct Mesh with Quad" node |
-| **2026-02-13** | Added the node "Weld Vertices"<br>Added the resolution 1536 for "Mesh Texturing" |
-| **2026-02-12** | Added the node "Mesh With Voxel Multi-View Generator" |
-|| Added the node "Mesh Texturing Multi-View" |
-|| Added new example workflows |
-| **2026-02-10** | Improved progress bar when filling holes with meshlib |
-| **2026-02-09** | Fixed "Mesh Texturing" node<br>"mesh_cluster_threshold_cone_half_angle_rad" was not used |
-| **2026-02-08** | Fixed "Fill Holes" node progress bar<br>Updated Cumesh package<br>Added "Remesh with Quad" node<br>Added "Batch Simplify Mesh and Export" node|
-| **2026-02-07** | Updated Cumesh package<br>Improved "Remesh" node when removing inner layer|
-| **2026-02-02** | Added node "Smooth Normals"<br>Useful for "Low Poly" mesh to remove the "blocky" aspect|
-|| Added "remove_background" parameter for "PreProcess Image" node<br>Using rembg package|
-| **2026-01-30** | Updated Cumesh, updated nodes, updated workflows|
-||PostProcess UnWrap and Rasterize : removed fill_holes_max_perimeter <br> using fill holes from Meshlib|
-||Remesh : added "remove_inner_faces" -> same algorithm as "Reconstruct Mesh"|
-||Mesh Texturing: added "mesh_cluster_threshold_cone_half_angle_rad"|
-| **2026-01-29** |Updated cumesh -> Remesh and Reconstruct made by chunk|
-| **2026-01-28** |Added the node "Fill Holes With Meshlib"|
-||Trying to fix caching issue|
-| **2026-01-27** |Added the node "Trellis2ReconstructMesh"|
-||"Multiple Images" support for "Mesh Refiner" node|
-| **2026-01-21** |Added a "Continue" node|
-||Added the option "bake_on_vertices" for "Mesh Texturing" node|
-||Added "padding" option for "Preprocess Image" node|
-| **2026-01-20** |Added node "Simplify Trimesh"|
-||Fixed crash with "remove_infinite_vertices" in "PostProcess Mesh" node|
-||Fixed texture generation|
-| **2026-01-19** |Updated Cumesh|
-| **2026-01-12** |Can pass multiple images to "Mesh Texturing" node (experimental)|
-||Applied latest fixes from Microsoft|
-| **2026-01-05** |Implemented "Tiled" Decoder|
-||Updated Cumesh and O_voxel|
-
----
-
-## REQUIREMENTS ##
-
-You need to have access to facebook dinov3 models in order to use Trellis.2
-
-[https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m](https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m)
-
-Clone the repository in ComfyUI models folder under "facebook/dinov3-vitl16-pretrain-lvd1689m"
-
-So in ComfyUI/models/facebook/dinov3-vitl16-pretrain-lvd1689m
-
-To use **TencentARC/Pixal3D-T** model, it's required to install **natten** package : https://github.com/SHI-Labs/NATTEN
-
----
-
-## ⚙️ Installation Guide
-
-> Tested on **Windows 11** with **Python 3.11** and **Torch = 2.7.0 + cu128**.
-
-### 1. Install Wheels
-
-#### For a standard python environment:
-
-**If you use Torch v2.7.0:**
-```bash
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch270/cumesh-1.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch270/nvdiffrast-0.4.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch270/nvdiffrec_render-0.0.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch270/flex_gemm-0.0.1-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch270/o_voxel-0.0.1-cp311-cp311-win_amd64.whl
+```
+cp .env.example .env       # then fill in HF_TOKEN + TRELLIS_API_KEY
+make build                 # ~30 min cold; CUDA_ARCH=12.0 make build for Blackwell
+make fetch-models          # one-time, ~26 GB (gated DinoV3 + Pixal3D-T + MoGe + ss_dec)
+make up                    # API on :8487, ComfyUI UI loopback on :8488
+make health                # confirm everything is wired
 ```
 
-**If you use Torch v2.8.0:**
-```bash
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch280/cumesh-1.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch280/nvdiffrast-0.4.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch280/nvdiffrec_render-0.0.0-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch280/flex_gemm-0.0.1-cp311-cp311-win_amd64.whl
-python -m pip install ComfyUI/custom_nodes/ComfyUI-Trellis2/wheels/Windows/Torch280/o_voxel-0.0.1-cp311-cp311-win_amd64.whl
-```
+## What `make fetch-models` provisions
 
----
+Pre-populates `./data/models` (host bind-mount) idempotently with everything
+the **Pixal3D-T API** path needs. Re-run any time on a fresh box / new
+volume — already-present model sets are skipped via per-repo
+`.fetch_complete` markers.
 
-#### For ComfyUI Portable:
+**Required in `.env`:**
 
-**If you use Torch v2.7.0:**
-```bash
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch270\cumesh-1.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch270\nvdiffrast-0.4.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch270\nvdiffrec_render-0.0.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch270\flex_gemm-0.0.1-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch270\o_voxel-0.0.1-cp311-cp311-win_amd64.whl
-```
+- `HF_TOKEN` — Hugging Face token used **only by `fetch-models`**, to pull
+  the gated DinoV3 weights. Three steps:
+  1. Open <https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m>
+     while signed in and click **Agree and access repository** — DinoV3 is
+     a *gated* model, this grants your HF account read access to it.
+  2. Generate a token at <https://huggingface.co/settings/tokens> with the
+     default **Read** preset (no extra scopes needed).
+  3. Put it in `.env` as `HF_TOKEN=hf_...`.
 
-**If you use Torch v2.8.0:**
-```bash
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch280\cumesh-1.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch280\nvdiffrast-0.4.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch280\nvdiffrec_render-0.0.0-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch280\flex_gemm-0.0.1-cp311-cp311-win_amd64.whl
-python_embeded\python.exe -m pip install ComfyUI\custom_nodes\ComfyUI-Trellis2\wheels\Windows\Torch280\o_voxel-0.0.1-cp311-cp311-win_amd64.whl
-```
+  Without it, `fetch-models` exits fast with `HF_TOKEN is not set and
+  DinoV3 is missing`. The token is never baked into the image — Compose
+  injects it only into the one-off `model-fetch` container at fetch time.
 
----
+- `TRELLIS_API_KEY` — **the API access key**. Every request to the hosted
+  API must carry it as `Authorization: Bearer $TRELLIS_API_KEY` (every
+  endpoint except `/healthz`). Generate any long random string and put it
+  in `.env`, e.g. `TRELLIS_API_KEY=$(openssl rand -hex 32)`. Run-time only;
+  not used by `fetch-models`, so you can set it later. Also never baked —
+  Compose injects it from `.env` into the running container.
 
-**Check the folder wheels for the other versions**
+**Fetches** (~26 GB total):
 
----
+| Repo | Size | Gated |
+|---|---|---|
+| `facebook/dinov3-vitl16-pretrain-lvd1689m` | ~1.2 GB | yes |
+| `TencentARC/Pixal3D-T` | ~23 GB | no |
+| `Ruicheng/moge-2-vitl` | ~1.3 GB | no |
+| `microsoft/TRELLIS-image-large` (the two `ss_dec` files only) | ~140 MB | no |
 
-### 2. Custom Build
+**Where they land:** each set goes under `./data/models/<org>/<repo>/` on
+the host (e.g. `./data/models/facebook/dinov3-vitl16-pretrain-lvd1689m/`).
+That directory is bind-mounted into the container as `/opt/ComfyUI/models`,
+which is what ComfyUI reads via `folder_paths.models_dir`. The NAF runtime
+cache lives at `./data/models/.torch_hub/` next to it. Weights persist
+across container rebuilds — the image itself stays weight-free.
 
-#### o_voxel
+One extra model — `valeoai/NAF` — auto-downloads via `torch.hub` at the
+**first Pixal3D-T generation**, not during `fetch-models`. It is cached in
+the mounted `data/models/.torch_hub` and reused after.
 
-Use my own version of Trellis.2 here: https://github.com/visualbruno/TRELLIS.2
+**Not fetched** — `Trellis2LoadModel` in the ComfyUI UI also offers
+`microsoft/TRELLIS.2-4B` and `visualbruno/TRELLIS.2-4B-FP8` for other
+(non-Pixal3D-T) workflows. Those would auto-download on first selection in
+the UI. The hosted API only exposes Pixal3D-T, so for API use these four
+are sufficient.
 
-#### Cumesh 
-
-Use my own version of Cumesh here: https://github.com/visualbruno/CuMesh
-
-### FlexGEMM
-
-Use my own version of FlexGEMM here: https://github.com/visualbruno/FlexGEMM
-
-### natten (only used for TencentARC/Pixal3D-T model)
-
-https://github.com/SHI-Labs/NATTEN
-
----
-
-### 3. Requirements.txt
-
-#### For a standard python environment:
+## Generate a model (image in → `.glb` out)
 
 ```bash
-python -m pip install -r ComfyUI/custom_nodes/ComfyUI-Trellis2/requirements.txt
+KEY=$(grep ^TRELLIS_API_KEY= .env | cut -d= -f2-)
+
+# Submit (mode=textured ~25 min, mode=mesh ~10 min)
+JOB=$(curl -s -X POST http://localhost:8487/v1/generate \
+        -H "Authorization: Bearer $KEY" \
+        -F image=@your-photo.jpg \
+        -F mode=mesh \
+      | python3 -c 'import json,sys; print(json.load(sys.stdin)["job_id"])')
+echo "$JOB"
+
+# Poll until status == succeeded
+curl -s -H "Authorization: Bearer $KEY" http://localhost:8487/v1/jobs/$JOB
+
+# Fetch the GLB
+curl -s -H "Authorization: Bearer $KEY" http://localhost:8487/v1/jobs/$JOB/model -o out.glb
 ```
 
----
+The same `.glb` also lands on the host at `data/output/api_<JOB>*.glb`
+(the output volume is bind-mounted).
 
-#### For ComfyUI Portable:
+## Browse the ComfyUI UI
 
-```bash
-python_embeded\python.exe -m pip install -r ComfyUI\custom_nodes\ComfyUI-Trellis2\requirements.txt
+The UI is **loopback-bound** (no auth on ComfyUI itself; only the API has
+the bearer token). From a remote workstation, SSH-tunnel:
+
 ```
+ssh -L 8488:127.0.0.1:8488 <user>@<box>
+# then open http://localhost:8488 in your browser
+```
+
+Both Pixal3D-T workflows (`MeshOnly_Pixal3D`, `MeshWithTexturing_Pixal3D`)
+are baked into ComfyUI's Workflows browser — no import step.
+
+## Make targets
+
+```
+make help
+```
+
+`make build` accepts `CUDA_ARCH` (default `8.6`; `12.0` for Blackwell /
+RTX PRO 6000). `make restart` recreates the container on the current image.
+
+## Going deeper
+
+`api/README.md` covers the API contract, the `mode=mesh|textured` switch,
+how to regenerate the workflow templates if you edit them, and the
+multi-architecture / Blackwell-readiness notes.
 
 ## 🙏 Acknowledgements
 
-Discord community
-
-"Blackwell Fix" from https://github.com/ThatButters/trellis2-blackwell-fix
+- Upstream node code, example workflows, and bundled Linux wheels:
+  [visualbruno/ComfyUI-Trellis2](https://github.com/visualbruno/ComfyUI-Trellis2).
+  Source builds use the upstream author's documented "Custom Build" repos
+  at pinned commits: [`FlexGEMM`](https://github.com/visualbruno/FlexGEMM),
+  [`CuMesh`](https://github.com/visualbruno/CuMesh), and the `o_voxel`
+  subtree of [`TRELLIS.2`](https://github.com/visualbruno/TRELLIS.2);
+  rasterization uses official [`NVlabs/nvdiffrast`](https://github.com/NVlabs/nvdiffrast).
+- Discord community
+- "Blackwell Fix" from <https://github.com/ThatButters/trellis2-blackwell-fix>
