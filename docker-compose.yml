@@ -22,13 +22,11 @@ services:
         CUDA_ARCH: ${CUDA_ARCH:-8.6}
     image: comfyui-trellis2:pixal3d-t
     ports:
-      - "8000:8000"   # hosted Pixal3D-T API (bearer-token; the public surface)
-      - "8188:8188"   # ComfyUI UI — needed once for the API-format export
+      - "8000:8000"               # hosted Pixal3D-T API (bearer-token; public)
+      - "127.0.0.1:8188:8188"     # ComfyUI UI: loopback only — no auth on it;
+                                  # SSH-tunnel from a workstation if needed:
+                                  #   ssh -L 8188:127.0.0.1:8188 erik@<box>
     gpus: all
-    # Lets py-spy attach for live stack traces when diagnosing a hang. Harmless
-    # on a single-host self-managed box; tighten/remove for hardened deploys.
-    cap_add: ["SYS_PTRACE"]
-    security_opt: ["seccomp:unconfined"]
     environment:
       - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
       - TORCH_HOME=/opt/ComfyUI/models/.torch_hub
