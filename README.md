@@ -24,6 +24,42 @@ make up                    # API on :8487, ComfyUI UI loopback on :8488
 make health                # confirm everything is wired
 ```
 
+## What `make fetch-models` provisions
+
+Pre-populates `./data/models` (host bind-mount) idempotently with everything
+the **Pixal3D-T API** path needs. Re-run any time on a fresh box / new
+volume — already-present model sets are skipped via per-repo
+`.fetch_complete` markers.
+
+**Required in `.env`:**
+
+- `HF_TOKEN` — a Hugging Face access token with at least **read** scope.
+  DinoV3 is a **gated** model, so you must first accept its license at
+  <https://huggingface.co/facebook/dinov3-vitl16-pretrain-lvd1689m> using
+  the same HF account that owns the token. Without that the fetch fails
+  fast with a clear "HF_TOKEN is not set and DinoV3 is missing" message.
+- `TRELLIS_API_KEY` — bearer used at run time by the API. Not used by
+  `fetch-models`; you can set it later.
+
+**Fetches** (~26 GB total):
+
+| Repo | Size | Gated |
+|---|---|---|
+| `facebook/dinov3-vitl16-pretrain-lvd1689m` | ~1.2 GB | yes |
+| `TencentARC/Pixal3D-T` | ~23 GB | no |
+| `Ruicheng/moge-2-vitl` | ~1.3 GB | no |
+| `microsoft/TRELLIS-image-large` (the two `ss_dec` files only) | ~140 MB | no |
+
+One extra model — `valeoai/NAF` — auto-downloads via `torch.hub` at the
+**first Pixal3D-T generation**, not during `fetch-models`. It is cached in
+the mounted `data/models/.torch_hub` and reused after.
+
+**Not fetched** — `Trellis2LoadModel` in the ComfyUI UI also offers
+`microsoft/TRELLIS.2-4B` and `visualbruno/TRELLIS.2-4B-FP8` for other
+(non-Pixal3D-T) workflows. Those would auto-download on first selection in
+the UI. The hosted API only exposes Pixal3D-T, so for API use these four
+are sufficient.
+
 ## Generate a model (image in → `.glb` out)
 
 ```bash
