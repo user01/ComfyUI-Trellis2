@@ -9,7 +9,9 @@ The example workflows are **baked into the image** — no downloading, no
 importing from disk. They live in ComfyUI's user library at
 `/opt/ComfyUI/user/default/workflows/` (copied from `example_workflows/`).
 
-1. Open `http://<box>:8188`.
+1. Open `http://<box>:8488` (the UI is loopback-only; SSH-tunnel from
+   a workstation: `ssh -L 8488:127.0.0.1:8488 <user>@<box>`, then open
+   `http://localhost:8488`).
 2. Open the **Workflows** panel (sidebar / top-left menu → Workflows). You'll
    see `MeshOnly_Pixal3D` and `MeshWithTexturing_Pixal3D` already listed.
    Click one to load it.
@@ -42,7 +44,7 @@ the plan for the endpoint contract (`POST /v1/generate`, `GET /v1/jobs/{id}`,
 - `mode=mesh` — geometry only (`pixal3d_mesh.api.json`); much faster.
 
 ```
-curl -s -X POST http://<box>:8000/v1/generate \
+curl -s -X POST http://<box>:8487/v1/generate \
   -H "Authorization: Bearer $TRELLIS_API_KEY" \
   -F image=@photo.jpg -F mode=mesh
 ```
@@ -76,7 +78,7 @@ ComfyUI's own exporter (no hand-conversion). If you change a workflow in
 - **ComfyUI UI**: load the workflow, top-left menu → Workflow →
   **Export (API)**, save over the matching `api/workflows/*.api.json`.
 - **Headless** (what was used here): a short Playwright script that calls
-  ComfyUI's `app.graphToPrompt()` against `http://localhost:8188`. The
+  ComfyUI's `app.graphToPrompt()` against `http://localhost:8488`. The
   server self-reloads the template on the next request — no rebuild needed
   unless you want it re-baked into the image.
 

@@ -18,7 +18,7 @@ build: ## Build the image  (override: make build CUDA_ARCH=12.0)
 fetch-models: ## One-time weight provisioning (needs HF_TOKEN in .env)
 	docker compose --profile setup run --rm model-fetch
 
-up: ## Start in API mode (:8000 API, :8188 ComfyUI UI)
+up: ## Start in API mode (:8487 API public, :8488 ComfyUI UI loopback)
 	docker compose up -d
 
 down: ## Stop and remove the container
@@ -33,4 +33,4 @@ ps: ## Show service status
 	docker compose ps
 
 health: ## Hit /healthz on the API
-	@curl -fsS http://localhost:8000/healthz | python3 -m json.tool
+	@curl -fsS http://localhost:8487/healthz | python3 -m json.tool
